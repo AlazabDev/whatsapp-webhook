@@ -1,12 +1,27 @@
+"use client"
+
 import { Sidebar } from "@/components/dashboard/sidebar"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Smartphone, Zap, Calendar, ChevronLeft, Code2, Webhook, ExternalLink } from "lucide-react"
 import { DailyMessagesChart } from "@/components/dashboard/charts"
+import { supabase } from "@/lib/supabase"
+import { useEffect, useState } from "react"
 
 export default function Dashboard() {
+  const [stats, setStats] = useState({ messages: 0, contacts: 0 })
+
+  useEffect(() => {
+    const fetchStats = async () => {
+      const { count: msgCount } = await supabase.from("messages").select("*", { count: "exact", head: true })
+      const { count: contactCount } = await supabase.from("contacts").select("*", { count: "exact", head: true })
+      setStats({ messages: msgCount || 0, contacts: contactCount || 0 })
+    }
+    fetchStats()
+  }, [])
+
   return (
-    <div className="flex h-screen bg-background">
+    <div className="flex h-screen bg-background text-right" dir="rtl">
       <Sidebar />
       <main className="flex-1 overflow-y-auto p-8">
         <div className="flex items-center justify-between mb-8">
@@ -40,11 +55,11 @@ export default function Dashboard() {
           <Card>
             <CardContent className="p-6">
               <div className="flex items-center justify-between mb-4">
-                <span className="text-sm font-medium text-muted-foreground">الأرقام</span>
+                <span className="text-sm font-medium text-muted-foreground">جهات الاتصال</span>
                 <ChevronLeft className="h-4 w-4 text-muted-foreground" />
               </div>
-              <div className="text-3xl font-bold">1</div>
-              <p className="text-xs text-muted-foreground mt-1">1 مهدي</p>
+              <div className="text-3xl font-bold">{stats.contacts}</div>
+              <p className="text-xs text-muted-foreground mt-1">إجمالي العملاء</p>
             </CardContent>
           </Card>
           <Card>
@@ -53,8 +68,8 @@ export default function Dashboard() {
                 <span className="text-sm font-medium text-muted-foreground">الرسائل</span>
                 <ChevronLeft className="h-4 w-4 text-muted-foreground" />
               </div>
-              <div className="text-3xl font-bold">68</div>
-              <p className="text-xs text-muted-foreground mt-1">68 بوصة • 0 خارج</p>
+              <div className="text-3xl font-bold">{stats.messages}</div>
+              <p className="text-xs text-muted-foreground mt-1">نشاط المنصة الحالي</p>
             </CardContent>
           </Card>
           <Card>

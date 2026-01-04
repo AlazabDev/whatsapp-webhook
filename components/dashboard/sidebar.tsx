@@ -2,9 +2,38 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { LayoutDashboard, PlusCircle, Inbox, Smartphone, Database, LogOut, FileText, Send, BarChart3, Share2, Terminal, Webhook, Key, Settings, HelpCircle, Activity, FileJson } from "lucide-react"
+import {
+  LayoutDashboard,
+  PlusCircle,
+  Inbox,
+  Smartphone,
+  Database,
+  LogOut,
+  FileText,
+  Send,
+  BarChart3,
+  Share2,
+  Terminal,
+  Webhook,
+  Key,
+  Settings,
+  HelpCircle,
+  Activity,
+  FileJson,
+  ChevronDown,
+  Plus,
+} from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
+import { useState } from "react"
 
 const navigation = [
   { name: "لوحة المعلومات", href: "/", icon: LayoutDashboard },
@@ -52,23 +81,58 @@ const apiMenu = [
   { name: "مفاتيح واجهة برمجة التطبيقات", href: "/api-keys", icon: Key },
 ]
 
+const systemMenu = [
+  { name: "إعدادات الذكاء الاصطناعي", href: "/settings/ai", icon: Terminal },
+  { name: "إعدادات المشروع", href: "/settings/project", icon: Settings },
+]
+
 export function Sidebar() {
   const pathname = usePathname()
+  const [currentProject, setCurrentProject] = useState({ name: "نظام العزب", id: "1" })
+  const [projects] = useState([
+    { name: "نظام العزب", id: "1" },
+    { name: "أوبر فيكس", id: "2" },
+  ])
 
   return (
     <div className="flex h-full w-64 flex-col border-l bg-card">
       <div className="flex h-16 items-center justify-between px-6 border-b">
         <span className="text-xl font-bold">العزب هاب</span>
-        <div className="h-6 w-6 bg-primary rounded" />
+        <div className="h-6 w-6 bg-emerald-500 rounded shadow-sm shadow-emerald-500/50" />
       </div>
 
       <div className="flex-1 overflow-y-auto py-4 px-3 space-y-6">
         <div>
           <p className="px-3 text-xs font-semibold text-muted-foreground mb-2">المشروع</p>
-          <div className="px-3 py-2 bg-muted/50 rounded-md border flex items-center justify-between mb-4">
-            <span className="text-sm font-medium">أوبر فيكس</span>
-            <Settings className="h-4 w-4 text-muted-foreground" />
-          </div>
+
+          <DropdownMenu dir="rtl">
+            <DropdownMenuTrigger asChild>
+              <button className="w-full px-3 py-2 bg-muted/50 hover:bg-muted rounded-md border flex items-center justify-between mb-4 transition-colors">
+                <span className="text-sm font-medium">{currentProject.name}</span>
+                <ChevronDown className="h-4 w-4 text-muted-foreground" />
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent className="w-56" align="start">
+              <DropdownMenuLabel>اختر المشروع</DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              {projects.map((project) => (
+                <DropdownMenuItem
+                  key={project.id}
+                  onClick={() => setCurrentProject(project)}
+                  className="flex items-center justify-between"
+                >
+                  {project.name}
+                  {currentProject.id === project.id && <Settings className="h-3 w-3 text-emerald-500" />}
+                </DropdownMenuItem>
+              ))}
+              <DropdownMenuSeparator />
+              <DropdownMenuItem className="text-emerald-500 focus:text-emerald-600 focus:bg-emerald-50">
+                <Plus className="ml-2 h-4 w-4" />
+                إنشاء مشروع جديد
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+
           <nav className="space-y-1">
             {navigation.map((item) => (
               <Link
@@ -83,12 +147,6 @@ export function Sidebar() {
                 {item.name}
               </Link>
             ))}
-          </nav>
-        </div>
-
-        <div>
-          <p className="px-3 text-xs font-semibold text-muted-foreground mb-2 uppercase tracking-wider">واتساب</p>
-          <nav className="space-y-1">
             {whatsappMenu.map((item) => (
               <div key={item.name}>
                 <Link
@@ -133,6 +191,59 @@ export function Sidebar() {
                 <item.icon className="ml-3 h-4 w-4" />
                 {item.name}
               </Link>
+            ))}
+            {systemMenu.map((item) => (
+              <Link
+                key={item.name}
+                href={item.href}
+                className={cn(
+                  "group flex items-center px-3 py-2 text-sm font-medium rounded-md",
+                  pathname === item.href
+                    ? "bg-emerald-500/10 text-emerald-600"
+                    : "text-muted-foreground hover:bg-accent",
+                )}
+              >
+                <item.icon className="ml-3 h-4 w-4" />
+                {item.name}
+              </Link>
+            ))}
+          </nav>
+        </div>
+
+        <div>
+          <p className="px-3 text-xs font-semibold text-muted-foreground mb-2 uppercase tracking-wider">واتساب</p>
+          <nav className="space-y-1">
+            {whatsappMenu.map((item) => (
+              <div key={item.name}>
+                <Link
+                  href={item.href}
+                  className={cn(
+                    "group flex items-center px-3 py-2 text-sm font-medium rounded-md",
+                    pathname.startsWith(item.href)
+                      ? "bg-primary/10 text-primary"
+                      : "text-muted-foreground hover:bg-accent",
+                  )}
+                >
+                  <item.icon className="ml-3 h-4 w-4" />
+                  {item.name}
+                </Link>
+                {item.children && pathname.startsWith(item.href) && (
+                  <div className="mr-7 mt-1 space-y-1">
+                    {item.children.map((child) => (
+                      <Link
+                        key={child.name}
+                        href={child.href}
+                        className={cn(
+                          "block px-3 py-1 text-xs font-medium rounded-md",
+                          pathname === child.href ? "text-primary" : "text-muted-foreground hover:text-foreground",
+                        )}
+                      >
+                        {child.name}
+                      </Link>
+                    ))}
+                  </div>
+                )}
+              </div>
             ))}
           </nav>
         </div>
