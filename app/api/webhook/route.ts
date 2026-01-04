@@ -35,6 +35,9 @@ export async function POST(request: Request) {
 
     const whatsappPhoneNumberId = value.metadata?.phone_number_id
 
+    // Log the event for debugging
+    console.log(`[v0] Incoming message from ${msg.from} to ID ${whatsappPhoneNumberId}`)
+
     // 1. Upsert Contact
     const { data: contactData } = await supabase
       .from("contacts")
@@ -63,7 +66,7 @@ export async function POST(request: Request) {
     }
 
     // AI Auto-Reply Logic (Integrated with Projects and AI SDK)
-    if (waNumberRecord?.project_id && msg.text?.body) {
+    if (waNumberRecord?.project_id && msg.text?.body && waNumberRecord.project?.slug === "alazab-system") {
       try {
         // Load AI Service configured for this specific project
         const aiService = await AIService.fromProjectId(waNumberRecord.project_id)
@@ -89,25 +92,28 @@ export async function POST(request: Request) {
               .filter((m) => m.content.trim() !== "") || []
 
           // Generate response using Vercel AI SDK
-          const responseText = await aiService.generateResponse(conversation)
+          const responseText = await aiService.generateResponse([
+            ...conversation,
+            { role: "user", content: msg.text.body },
+          ])
 
-          if (responseText && whatsappPhoneNumberId) {
-            // Send back to WhatsApp
+          if (responseText) {
+            // REAL API CALL: Actually sends the message to Meta
             await sendWhatsAppMessage(whatsappPhoneNumberId, msg.from, responseText)
 
-            // Log the AI response in our database
+            // Log for your business records
             await supabase.from("messages").insert({
               contact_id: contactData.id,
               whatsapp_number_id: waNumberRecord.id,
               type: "text",
               direction: "outbound",
               body: responseText,
-              metadata: { ai_generated: true, model_used: "ai-sdk" },
+              metadata: { ai_generated: true, source: "alazab-hub-ai" },
             })
           }
         }
       } catch (error) {
-        console.error("[v0] AI Auto-Reply failed:", error)
+        console.error("[v0] Real-world AI response failed:", error)
       }
     }
   }

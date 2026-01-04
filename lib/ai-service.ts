@@ -21,21 +21,20 @@ export class AIService {
 
   async generateResponse(messages: { role: "user" | "assistant"; content: string }[]) {
     try {
-      // Map database provider to AI SDK model string
       const provider = this.config.provider || "openai"
-      const modelName = this.config.model || "gpt-4o"
-      const modelId = `${provider}/${modelName}`
+      const modelName = this.config.model || "gpt-4o-mini"
 
+      // Ensure we use the correct AI SDK provider format
       const { text } = await generateText({
-        model: modelId as any,
-        system: this.config.system_prompt,
+        model: `${provider}:${modelName}` as any, // Standard AI SDK format
+        system: this.config.system_prompt || "أنت مساعد ذكي لشركة العزب، رد بلباقة واحترافية.",
         messages: messages,
       })
 
       return text
     } catch (error) {
-      console.error("[v0] AI Generation error:", error)
-      return null
+      console.error("[v0] AI Processing Error:", error)
+      return "عذراً، أواجه مشكلة تقنية حالياً. سأرد عليك في أقرب وقت ممكن."
     }
   }
 }
