@@ -1,9 +1,8 @@
-# WhatsApp platform
+# WhatsApp Hub
 
-*Automatically synced with your [v0.app](https://v0.app) deployments*
+*Automatically synced with your [whatsapp-hub](https://whatsapp.alazab.com) deployments*
 
-[![Deployed on Vercel](https://img.shields.io/badge/Deployed%20on-Vercel-black?style=for-the-badge&logo=vercel)](https://vercel.com/alazab-projects/v0-whats-app-platform)
-[![Built with v0](https://img.shields.io/badge/Built%20with-v0.app-black?style=for-the-badge)](https://v0.app/chat/fe2Jueuav0m)
+[![Deployed on Vercel](https://img.shields.io/badge/Deployed%20on-Vercel-black?style=for-the-badge&logo=vercel)](https://alazab.dev)
 
 ## Overview
 
@@ -14,17 +13,12 @@ Any changes you make to your deployed app will be automatically pushed to this r
 
 Your project is live at:
 
-**[https://vercel.com/alazab-projects/v0-whats-app-platform](https://vercel.com/alazab-projects/v0-whats-app-platform)**
+**[https://alazab.dev]([https://alazab.dev](https://whatsapp.alazab.com))**
 
-## Build your app
-
-Continue building your app on:
-
-**[https://v0.app/chat/fe2Jueuav0m](https://v0.app/chat/fe2Jueuav0m)**
 
 ## How It Works
 
-1. Create and modify your project using [v0.app](https://v0.app)
-2. Deploy your chats from the v0 interface
+1. Create and modify your project using [alazab.app](https://alazab.dev)
+2. Deploy your chats from the azab interface
 3. Changes are automatically pushed to this repository
 4. Vercel deploys the latest version from this repository
