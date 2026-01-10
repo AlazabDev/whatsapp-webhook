@@ -1,165 +1,81 @@
-"use client"
+import { redirect } from "next/navigation"
+import { createClient } from "@/lib/supabase/server"
+import { getCurrentUser } from "@/lib/auth/trusted-auth"
 
-import { Sidebar } from "@/components/dashboard/sidebar"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Smartphone, Zap, Calendar, ChevronLeft, Code2, Webhook, ExternalLink } from "lucide-react"
-import { DailyMessagesChart } from "@/components/dashboard/charts"
-import { supabase } from "@/lib/supabase"
-import { useEffect, useState } from "react"
+export const metadata = {
+  title: "WhatsApp Platform",
+  description: "منصة إدارة رسائل WhatsApp للعمليات التجارية",
+}
 
-export default function Dashboard() {
-  const [stats, setStats] = useState({ messages: 0, contacts: 0 })
+export default async function HomePage() {
+  const user = await getCurrentUser()
 
-  useEffect(() => {
-    const fetchStats = async () => {
-      const { count: msgCount } = await supabase.from("messages").select("*", { count: "exact", head: true })
-      const { count: contactCount } = await supabase.from("contacts").select("*", { count: "exact", head: true })
-      setStats({ messages: msgCount || 0, contacts: contactCount || 0 })
-    }
-    fetchStats()
-  }, [])
+  if (!user) {
+    redirect("/auth/login")
+  }
+
+  const supabase = await createClient()
+  const { data: projects } = await supabase.from("projects").select("*").order("created_at", { ascending: false })
 
   return (
-    <div className="flex h-screen bg-background text-right" dir="rtl">
-      <Sidebar />
-      <main className="flex-1 overflow-y-auto p-8">
-        <div className="flex items-center justify-between mb-8">
-          <div className="flex items-center gap-4">
-            <h1 className="text-2xl font-bold">لوحة المعلومات</h1>
-            <div className="flex items-center gap-2 bg-muted px-3 py-1 rounded-full">
-              <span className="text-xs text-muted-foreground">الترقية</span>
-              <span className="text-xs font-medium bg-background px-2 py-0.5 rounded-full">مجاني</span>
-            </div>
-          </div>
-          <div className="flex items-center gap-4">
-            <div className="flex items-center bg-card border rounded-md px-3 py-1.5 gap-2 cursor-pointer">
-              <Calendar className="h-4 w-4 text-muted-foreground" />
-              <span className="text-sm">29 ديسمبر - 4 يناير 2026</span>
-            </div>
-            <div className="flex bg-muted p-1 rounded-md">
-              <Button variant="ghost" size="sm" className="h-7 text-xs">
-                اليوم
-              </Button>
-              <Button variant="ghost" size="sm" className="h-7 text-xs bg-background shadow-sm">
-                هذا الأسبوع
-              </Button>
-              <Button variant="ghost" size="sm" className="h-7 text-xs">
-                هذا الشهر
-              </Button>
-            </div>
-          </div>
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100">
+      <div className="container mx-auto px-4 py-12">
+        {/* Header */}
+        <div className="mb-12">
+          <h1 className="text-4xl font-bold text-slate-900 mb-2">مرحباً بك، {user.full_name}</h1>
+          <p className="text-xl text-slate-600">إدارة رسائلك التجارية وجهات اتصالك بسهولة</p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between mb-4">
-                <span className="text-sm font-medium text-muted-foreground">جهات الاتصال</span>
-                <ChevronLeft className="h-4 w-4 text-muted-foreground" />
+        {/* Projects Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {projects && projects.length > 0 ? (
+            projects.map((project) => (
+              <a
+                key={project.id}
+                href={`/dashboard/${project.slug}`}
+                className="group relative overflow-hidden rounded-lg bg-white shadow-md hover:shadow-lg transition-shadow"
+              >
+                <div className="p-6">
+                  <div className="flex items-start justify-between mb-4">
+                    <div>
+                      <h3 className="text-lg font-semibold text-slate-900">{project.name}</h3>
+                      {project.description && <p className="text-sm text-slate-600 mt-1">{project.description}</p>}
+                    </div>
+                  </div>
+                  <div className="flex items-center justify-between text-sm text-slate-500">
+                    <span>إنشاء في {new Date(project.created_at).toLocaleDateString("ar-EG")}</span>
+                  </div>
+                </div>
+                <div className="absolute inset-0 bg-gradient-to-r from-blue-500/0 to-blue-500/0 group-hover:from-blue-500/5 group-hover:to-blue-500/10 transition-all" />
+              </a>
+            ))
+          ) : (
+            <div className="col-span-full text-center py-12">
+              <div className="text-slate-400 mb-4">
+                <svg className="w-12 h-12 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"
+                  />
+                </svg>
               </div>
-              <div className="text-3xl font-bold">{stats.contacts}</div>
-              <p className="text-xs text-muted-foreground mt-1">إجمالي العملاء</p>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between mb-4">
-                <span className="text-sm font-medium text-muted-foreground">الرسائل</span>
-                <ChevronLeft className="h-4 w-4 text-muted-foreground" />
-              </div>
-              <div className="text-3xl font-bold">{stats.messages}</div>
-              <p className="text-xs text-muted-foreground mt-1">نشاط المنصة الحالي</p>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between mb-4">
-                <span className="text-sm font-medium text-muted-foreground">السجلات</span>
-                <ChevronLeft className="h-4 w-4 text-muted-foreground" />
-              </div>
-              <div className="text-3xl font-bold">0 أخطاء</div>
-              <p className="text-xs text-muted-foreground mt-1">من 69 إجمالا</p>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between mb-4">
-                <span className="text-sm font-medium text-muted-foreground">سير العمل</span>
-                <ChevronLeft className="h-4 w-4 text-muted-foreground" />
-              </div>
-              <div className="text-3xl font-bold">0 نقاط</div>
-              <p className="text-xs text-muted-foreground mt-1">جميعها ناجحة</p>
-            </CardContent>
-          </Card>
+              <h3 className="text-lg font-semibold text-slate-700 mb-2">لا توجد مشاريع</h3>
+              <p className="text-slate-600 mb-4">ابدأ بإنشاء مشروع جديد لإدارة حسابات WhatsApp الخاصة بك</p>
+              <a
+                href="/projects/new"
+                className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+              >
+                <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                </svg>
+                إنشاء مشروع جديد
+              </a>
+            </div>
+          )}
         </div>
-
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <Card className="lg:col-span-2">
-            <CardHeader>
-              <CardTitle className="text-lg">الرسائل اليومية</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <DailyMessagesChart />
-            </CardContent>
-          </Card>
-
-          <div className="space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-sm font-medium text-muted-foreground uppercase">إجراءات سريعة</CardTitle>
-              </CardHeader>
-              <CardContent className="grid grid-cols-2 gap-4">
-                <Button variant="outline" className="h-20 flex-col items-center justify-center gap-2 bg-transparent">
-                  <Smartphone className="h-5 w-5" />
-                  <span className="text-xs">أضف رقم هاتف</span>
-                </Button>
-                <Button variant="outline" className="h-20 flex-col items-center justify-center gap-2 bg-transparent">
-                  <Code2 className="h-5 w-5" />
-                  <span className="text-xs">إنشاء مفتاح API</span>
-                </Button>
-                <Button variant="outline" className="h-20 flex-col items-center justify-center gap-2 bg-transparent">
-                  <Webhook className="h-5 w-5" />
-                  <span className="text-xs">إنشاء webhook</span>
-                </Button>
-                <Button variant="outline" className="h-20 flex-col items-center justify-center gap-2 bg-transparent">
-                  <Zap className="h-5 w-5" />
-                  <span className="text-xs">إنشاء سير العمل</span>
-                </Button>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg">الوثائق</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="flex items-center justify-between text-sm text-primary hover:underline cursor-pointer">
-                  <span>whatsapp.alazab.com/docs</span>
-                  <ExternalLink className="h-3 w-3" />
-                </div>
-                <p className="text-xs text-muted-foreground">
-                  بالنسبة للوكلاء الذكاء الاصطناعي، مرر alazab.com/llms.txt أو الاتصال عبر MCP:
-                </p>
-                <div className="flex gap-2">
-                  <Button variant="outline" size="sm" className="h-7 text-xs bg-transparent">
-                    المؤشر
-                  </Button>
-                  <Button variant="outline" size="sm" className="h-7 text-xs bg-transparent">
-                    شيفرة كلود
-                  </Button>
-                  <Button variant="outline" size="sm" className="h-7 text-xs bg-transparent">
-                    كود VS
-                  </Button>
-                </div>
-                <div className="bg-muted p-3 rounded-md font-mono text-[10px] break-all">
-                  {`{ \"mcpServers\": { \"alazab\": { \"url\": \"https://whatsapp.alazab.com/mcp\" } } }`}
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-        </div>
-      </main>
+      </div>
     </div>
   )
 }

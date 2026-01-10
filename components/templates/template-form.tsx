@@ -1,200 +1,140 @@
 "use client"
 
-import { useState } from "react"
+import type React from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Card } from "@/components/ui/card"
-import { X, Plus } from "lucide-react"
-import { createAndSubmitTemplate } from "@/app/actions/whatsapp"
-import { useToast } from "@/hooks/use-toast"
+import { useState } from "react"
 
-interface TemplateVariable {
-  name: string
-  example: string
+interface TemplateFormProps {
+  projectId: string
+  whatsappNumberId: string
+  onSuccess?: () => void
+  initialData?: any
 }
 
-export function TemplateForm({ onSuccess, onCancel }: { onSuccess?: () => void; onCancel?: () => void }) {
-  const [name, setName] = useState("")
-  const [category, setCategory] = useState("UTILITY")
-  const [language, setLanguage] = useState("ar")
-  const [bodyText, setBodyText] = useState("")
-  const [variables, setVariables] = useState<TemplateVariable[]>([])
-  const [isSubmitting, setIsSubmitting] = useState(false)
-  const { toast } = useToast()
+export function TemplateForm({ projectId, whatsappNumberId, onSuccess, initialData }: TemplateFormProps) {
+  const [name, setName] = useState(initialData?.name || "")
+  const [category, setCategory] = useState(initialData?.category || "MARKETING")
+  const [language, setLanguage] = useState(initialData?.language || "ar")
+  const [body, setBody] = useState(initialData?.content?.body || "")
+  const [header, setHeader] = useState(initialData?.content?.header || "")
+  const [footer, setFooter] = useState(initialData?.content?.footer || "")
+  const [isLoading, setIsLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
-  const addVariable = () => {
-    const match = bodyText.match(/\{\{(\w+)\}\}/g)
-    if (!match) {
-      toast({
-        variant: "destructive",
-        title: "خطأ",
-        description: "لم يتم العثور على متغيرات في النص. استخدم {{variable_name}}",
-      })
-      return
-    }
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setIsLoading(true)
+    setError(null)
 
-    const varNames = match.map((v) => v.replace(/[{}]/g, ""))
-    const newVars: TemplateVariable[] = varNames.map((name) => ({
-      name,
-      example: "",
-    }))
-    setVariables(newVars)
-  }
-
-  const handleSubmit = async () => {
-    if (!name || !bodyText) {
-      toast({
-        variant: "destructive",
-        title: "بيانات ناقصة",
-        description: "يرجى إدخال اسم القالب والمحتوى",
-      })
-      return
-    }
-
-    setIsSubmitting(true)
     try {
-      // Build components
-      const components: any[] = [
-        {
-          type: "BODY",
-          text: bodyText,
-        },
-      ]
+      const endpoint = initialData ? "/api/templates/update" : "/api/templates/create"
+      const method = initialData ? "PUT" : "POST"
 
-      // Add examples if variables exist
-      if (variables.length > 0) {
-        const exampleParams = variables.map((v) => v.example || "example")
-        components[0].example = {
-          body_text: [exampleParams],
-        }
+      const response = await fetch(endpoint, {
+        method,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          ...(initialData && { templateId: initialData.id }),
+          projectId,
+          whatsappNumberId,
+          name,
+          category,
+          language,
+          content: {
+            body,
+            ...(header && { header }),
+            ...(footer && { footer }),
+          },
+        }),
+      })
+
+      if (!response.ok) {
+        const data = await response.json()
+        throw new Error(data.error || "حدث خطأ")
       }
 
-      await createAndSubmitTemplate(process.env.NEXT_PUBLIC_WHATSAPP_PHONE_NUMBER_ID || "", {
-        name: name.toLowerCase().replace(/\s+/g, "_"),
-        category,
-        language,
-        components,
-      })
-
-      toast({
-        title: "تم الإرسال بنجاح",
-        description: "تم إرسال القالب لميتا للمراجعة",
-      })
-
-      onSuccess?.()
-    } catch (error: any) {
-      toast({
-        variant: "destructive",
-        title: "فشل الإرسال",
-        description: error.message || "حدث خطأ أثناء إرسال القالب",
-      })
+      if (onSuccess) onSuccess()
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "حدث خطأ غير متوقع")
     } finally {
-      setIsSubmitting(false)
+      setIsLoading(false)
     }
   }
 
   return (
-    <Card className="p-6 space-y-6" dir="rtl">
-      <div className="space-y-2">
-        <Label htmlFor="template-name">اسم القالب</Label>
-        <Input id="template-name" placeholder="order_created" value={name} onChange={(e) => setName(e.target.value)} />
-        <p className="text-xs text-muted-foreground">يجب أن يكون بالإنجليزية وبدون مسافات</p>
+    <form onSubmit={handleSubmit} className="space-y-6">
+      <div className="grid gap-2">
+        <Label htmlFor="name">اسم القالب</Label>
+        <Input
+          id="name"
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          placeholder="مثال: تأكيد الطلب"
+          required
+        />
       </div>
 
       <div className="grid grid-cols-2 gap-4">
-        <div className="space-y-2">
+        <div className="grid gap-2">
           <Label htmlFor="category">الفئة</Label>
-          <Select value={category} onValueChange={setCategory}>
-            <SelectTrigger id="category">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="UTILITY">خدمي (UTILITY)</SelectItem>
-              <SelectItem value="MARKETING">تسويقي (MARKETING)</SelectItem>
-              <SelectItem value="AUTHENTICATION">مصادقة (AUTHENTICATION)</SelectItem>
-            </SelectContent>
-          </Select>
+          <select
+            id="category"
+            value={category}
+            onChange={(e) => setCategory(e.target.value)}
+            className="w-full px-3 py-2 border border-slate-200 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+          >
+            <option value="MARKETING">تسويق</option>
+            <option value="TRANSACTIONAL">معاملات</option>
+            <option value="OTP">رمز التحقق</option>
+            <option value="UTILITY">خدمة</option>
+          </select>
         </div>
 
-        <div className="space-y-2">
+        <div className="grid gap-2">
           <Label htmlFor="language">اللغة</Label>
-          <Select value={language} onValueChange={setLanguage}>
-            <SelectTrigger id="language">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="ar">العربية (ar)</SelectItem>
-              <SelectItem value="en">الإنجليزية (en)</SelectItem>
-            </SelectContent>
-          </Select>
+          <select
+            id="language"
+            value={language}
+            onChange={(e) => setLanguage(e.target.value)}
+            className="w-full px-3 py-2 border border-slate-200 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+          >
+            <option value="ar">العربية</option>
+            <option value="en">الإنجليزية</option>
+          </select>
         </div>
       </div>
 
-      <div className="space-y-2">
-        <Label htmlFor="body-text">نص الرسالة</Label>
+      <div className="grid gap-2">
+        <Label htmlFor="header">الرأس (اختياري)</Label>
+        <Input id="header" value={header} onChange={(e) => setHeader(e.target.value)} placeholder="عنوان الرسالة" />
+      </div>
+
+      <div className="grid gap-2">
+        <Label htmlFor="body">نص الرسالة</Label>
         <Textarea
-          id="body-text"
-          placeholder="مرحباً {{customer_name}}، تم استلام طلبك رقم {{order_id}} بنجاح."
-          value={bodyText}
-          onChange={(e) => setBodyText(e.target.value)}
+          id="body"
+          value={body}
+          onChange={(e) => setBody(e.target.value)}
+          placeholder="اكتب نص الرسالة..."
           rows={6}
-          className="font-sans"
+          required
         />
-        <p className="text-xs text-muted-foreground">
-          استخدم {`{{variable_name}}`} لإضافة متغيرات. لا تضع المتغير في بداية أو نهاية النص.
-        </p>
+        <p className="text-xs text-slate-500">يمكنك استخدام {{}} للمتغيرات</p>
       </div>
 
-      {variables.length === 0 && (
-        <Button type="button" variant="outline" onClick={addVariable} className="w-full bg-transparent">
-          <Plus className="h-4 w-4 ml-2" />
-          استخراج المتغيرات
-        </Button>
-      )}
-
-      {variables.length > 0 && (
-        <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <Label>أمثلة المتغيرات</Label>
-            <Button type="button" variant="ghost" size="sm" onClick={() => setVariables([])} className="h-8">
-              <X className="h-4 w-4" />
-            </Button>
-          </div>
-          {variables.map((variable, index) => (
-            <div key={index} className="flex gap-2">
-              <Input value={variable.name} disabled className="flex-1" />
-              <Input
-                placeholder="مثال"
-                value={variable.example}
-                onChange={(e) => {
-                  const newVars = [...variables]
-                  newVars[index].example = e.target.value
-                  setVariables(newVars)
-                }}
-                className="flex-1"
-              />
-            </div>
-          ))}
-        </div>
-      )}
-
-      <div className="flex gap-3 pt-4">
-        <Button onClick={handleSubmit} disabled={isSubmitting} className="flex-1 bg-primary">
-          {isSubmitting ? "جاري الإرسال..." : "إرسال للموافقة"}
-        </Button>
-        <Button
-          type="button"
-          variant="outline"
-          onClick={onCancel}
-          disabled={isSubmitting}
-          className="flex-1 bg-transparent"
-        >
-          إلغاء
-        </Button>
+      <div className="grid gap-2">
+        <Label htmlFor="footer">الذيل (اختياري)</Label>
+        <Input id="footer" value={footer} onChange={(e) => setFooter(e.target.value)} placeholder="تذييل الرسالة" />
       </div>
-    </Card>
+
+      {error && <div className="p-3 bg-red-50 border border-red-200 text-red-700 rounded">{error}</div>}
+
+      <Button type="submit" disabled={isLoading} className="w-full">
+        {isLoading ? "جاري الحفظ..." : initialData ? "تحديث القالب" : "إنشاء القالب"}
+      </Button>
+    </form>
   )
 }

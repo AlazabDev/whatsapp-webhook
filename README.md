@@ -1,24 +1,187 @@
-# WhatsApp Hub
+# منصة WhatsApp للأعمال
 
-*Automatically synced with your [whatsapp-hub](https://whatsapp.alazab.com) deployments*
+منصة متكاملة لإدارة رسائل WhatsApp، جهات الاتصال، والإحصائيات للشركات والفريق العاملين.
 
-[![Deployed on Alazab](https://img.shields.io/badge/Deployed%20on-Vercel-black?style=for-the-badge&logo=vercel)](https://alazab.dev)
+## ⚡ البدء السريع (3 خطوات فقط!)
 
-## Overview
+### 1️⃣ شغل SQL Script واحد
+في Supabase SQL Editor، شغل هذا الملف فقط:
+```sql
+-- scripts/009_seed_trusted_users.sql
+INSERT INTO public.trusted_users (email, full_name, is_active, created_at, updated_at)
+VALUES 
+  ('admin@alazab.com', 'مدير النظام', true, NOW(), NOW()),
+  ('mohamed@alazab.com', 'محمد', true, NOW(), NOW()),
+  ('ceo@alazab.com', 'الرئيس التنفيذي', true, NOW(), NOW());
+```
 
-This repository will stay in sync with your deployed chats on [az.app](https://alazab.dev).
-Any changes you make to your deployed app will be automatically pushed to this repository from [v0.app](https://v0.app).
+### 2️⃣ اختبر الدخول
+```
+URL: http://localhost:3000/auth/trusted-login
+البريد: admin@alazab.com
+كلمة المرور: لا تحتاج (دخول مباشر)
+```
 
-## Deployment
+### 3️⃣ انشر على Vercel
+اضغط **Publish** وسيتم النشر تلقائياً مع جميع المتغيرات.
 
-Your project is live at:
+---
 
-**[https://alazab.dev]([https://alazab.dev](https://whatsapp.alazab.com))**
+## المميزات الرئيسية
 
+### ✅ نظام الدخول الآمن
+- دخول مباشر بدون كلمة مرور للحسابات الموثوقة
+- جلسات آمنة تستمر لسنة كاملة
+- HttpOnly cookies للحماية
+- RLS policies على جميع البيانات
 
-## How It Works
+### 1. إدارة الرسائل
+- إرسال واستقبال الرسائل من WhatsApp Business API
+- تتبع حالة الرسائل (مرسل، مسلم، مقروء)
+- دعم الرسائل النصية والوسائط (الصور، الفيديو، الصوت، المستندات)
 
-1. Create and modify your project using [alazab.app](https://alazab.dev)
-2. Deploy your chats from the azab interface
-3. Changes are automatically pushed to this repository
-4. Vercel deploys the latest version from this repository
+### 2. إدارة جهات الاتصال
+- حفظ واستدعاء سريع لجهات الاتصال
+- تصنيف وتوسيم جهات الاتصال
+- سجل المحادثات الكامل لكل جهة اتصال
+
+### 3. نظام القوالب
+- إنشاء قوالب رسائل مخصصة
+- دعم المتغيرات الديناميكية
+- تصنيف القوالب (تسويق، معاملات، OTP، خدمة)
+
+### 4. الإحصائيات والتحليلات
+- عرض عدد الرسائل المرسلة والمستقبلة
+- معدل النجاح والتسليم
+- رسوم بيانية للأداء اليومي
+
+### 5. إدارة الفريق
+- إضافة أعضاء الفريق
+- تحديد الصلاحيات (عارض، عضو، مسؤول)
+- تتبع نشاط كل عضو
+
+### 6. الأمان
+- مصادقة آمنة (Session-based)
+- Row Level Security (RLS) على جميع البيانات
+- تشفير البيانات الحساسة
+
+## البنية التقنية
+
+### Frontend
+- **Next.js 16** - Framework React مع SSR
+- **TypeScript** - Type Safety
+- **Tailwind CSS** - Styling
+- **shadcn/ui** - Component Library
+- **Recharts** - Data Visualization
+
+### Backend
+- **Next.js API Routes** - Server-side logic
+- **Supabase** - Database & Session Management
+- **WhatsApp Business API** - Message handling
+
+### Database
+- **PostgreSQL** (via Supabase)
+- **Row Level Security (RLS)** for data protection
+- **Real-time subscriptions** for live updates
+
+## المجلدات الرئيسية
+
+```
+.
+├── app/
+│   ├── api/
+│   │   ├── auth/                 # المصادقة
+│   │   │   ├── trusted-login/   # دخول مباشر
+│   │   │   ├── trusted-logout/  # خروج آمن
+│   │   │   └── me/              # بيانات المستخدم
+│   │   ├── webhooks/            # WhatsApp webhooks
+│   │   ├── whatsapp/            # WhatsApp operations
+│   │   └── templates/           # Template management
+│   ├── auth/
+│   │   └── trusted-login/       # صفحة الدخول
+│   ├── dashboard/               # لوحة التحكم
+│   ├── page.tsx                 # الصفحة الرئيسية
+│   └── layout.tsx
+├── lib/
+│   ├── auth/
+│   │   └── trusted-auth.ts      # منطق الدخول الآمن
+│   └── supabase/                # Supabase clients
+├── scripts/
+│   ├── 001-008_setup.sql        # إعداد قاعدة البيانات
+│   └── 009_seed_trusted_users.sql  # الحسابات الموثوقة
+└── README.md
+```
+
+## التثبيت والإعداد
+
+### المتطلبات
+- Node.js 18+
+- حساب Supabase (مجاني)
+- WhatsApp Business Account (اختياري)
+
+### التشغيل محلياً
+
+```bash
+# 1. استنساخ المشروع
+git clone <repo-url>
+cd whatsapp-platform
+
+# 2. تثبيت المكتبات
+npm install
+
+# 3. تشغيل التطبيق
+npm run dev
+
+# 4. افتح http://localhost:3000/auth/trusted-login
+```
+
+## اختبار النظام
+
+### اختبر الدخول
+
+```bash
+curl -X POST http://localhost:3000/api/auth/trusted-login \
+  -H "Content-Type: application/json" \
+  -d '{"email":"admin@alazab.com"}'
+```
+
+### اختبر بيانات المستخدم
+
+```bash
+curl http://localhost:3000/api/auth/me \
+  -H "Cookie: trusted_session=YOUR_TOKEN"
+```
+
+## النشر على Vercel
+
+```bash
+# 1. اضغط Publish في v0
+# 2. تأكد من متغيرات البيئة في Vercel Vars
+# 3. المتغيرات المطلوبة:
+#    - NEXT_PUBLIC_SUPABASE_URL
+#    - NEXT_PUBLIC_SUPABASE_ANON_KEY
+#    - SUPABASE_SERVICE_ROLE_KEY
+#    - SESSION_SECRET
+```
+
+## التوثيق
+
+- **[QUICK_START.md](./QUICK_START.md)** - ابدأ بسرعة
+- **[API_TESTING.md](./API_TESTING.md)** - اختبر الـ APIs
+- **[SETUP_CHECKLIST.md](./SETUP_CHECKLIST.md)** - قائمة التحقق
+- **[FINAL_DEPLOYMENT_GUIDE.md](./FINAL_DEPLOYMENT_GUIDE.md)** - النشر النهائي
+
+## الدعم والمساعدة
+
+للمزيد من المساعدة:
+1. اقرأ [QUICK_START.md](./QUICK_START.md)
+2. افحص ملفات التوثيق الأخرى
+3. افتح Issue على GitHub
+
+## الترخيص
+
+MIT License - انظر ملف LICENSE
+
+---
+
+**منصة WhatsApp احترافية جاهزة للإنتاج! 🚀**
