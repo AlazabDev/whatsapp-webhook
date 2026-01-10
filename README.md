@@ -1,30 +1,48 @@
-# WhatsApp platform
-
-*Automatically synced with your [v0.app](https://v0.app) deployments*
-
-[![Deployed on Vercel](https://img.shields.io/badge/Deployed%20on-Vercel-black?style=for-the-badge&logo=vercel)](https://vercel.com/alazab-projects/v0-whats-app-platform)
-[![Built with v0](https://img.shields.io/badge/Built%20with-v0.app-black?style=for-the-badge)](https://v0.app/chat/fe2Jueuav0m)
+# WhatsApp Platform
 
 ## Overview
 
-This repository will stay in sync with your deployed chats on [v0.app](https://v0.app).
-Any changes you make to your deployed app will be automatically pushed to this repository from [v0.app](https://v0.app).
+This repository is the **official source code** for the WhatsApp Platform operated under **Alazab**.
+
+It represents the production system only, without any external build tools, third-party generators, or experimental platforms.
 
 ## Deployment
 
-Your project is live at:
+The platform is live and served exclusively from:
 
-**[https://vercel.com/alazab-projects/v0-whats-app-platform](https://vercel.com/alazab-projects/v0-whats-app-platform)**
+**https://alazab.dev**
 
-## Build your app
+## Architecture Principles
 
-Continue building your app on:
+- Single source of truth
+- Production-first mindset
+- No external UI builders or code generators referenced
+- All changes are intentional, reviewed, and production-ready
 
-**[https://v0.app/chat/fe2Jueuav0m](https://v0.app/chat/fe2Jueuav0m)**
+## Workflow
 
-## How It Works
+1. Development happens locally or via internal tooling
+2. Code is pushed directly to this repository
+3. Deployment is handled through the production pipeline
+4. **alazab.dev** always reflects the stable, approved version
 
-1. Create and modify your project using [v0.app](https://v0.app)
-2. Deploy your chats from the v0 interface
-3. Changes are automatically pushed to this repository
-4. Vercel deploys the latest version from this repository
+## Notes
+
+- This repository is **Alazab-owned**
+- No references to external platforms
+- No automatic syncs with third-party services
+- Production integrity takes priority over speed
+
+
+<br>
+<br>
+<div align="center">
+	<a href="https://alazab.dev">
+		<picture>
+			<div style="text-align:center;">
+       <a href="https://alazab.dev" target="_blank">
+    <img src="https://al-azab.co/images/logaz.gif" alt="Alazab.Dev" height="62" style="display:inline-block;">
+		</picture>
+	</a>
+</div>
+
