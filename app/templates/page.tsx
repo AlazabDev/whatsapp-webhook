@@ -32,7 +32,7 @@ export default function TemplatesPage() {
       const data = await getTemplatesFromDB(PHONE_NUMBER_ID)
       setTemplates(data)
     } catch (error) {
-      console.error("[v0] Error loading templates:", error)
+      console.error("[app] Error loading templates:", error)
     } finally {
       setIsLoading(false)
     }
