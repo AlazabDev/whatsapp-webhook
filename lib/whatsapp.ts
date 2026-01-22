@@ -34,7 +34,7 @@ export async function createWhatsAppTemplate(
 
   const data = await response.json()
   if (!response.ok) {
-    console.error("[v0] WhatsApp Template Creation Error:", data)
+    console.error("[app] WhatsApp Template Creation Error:", data)
     throw new Error(data.error?.message || "Failed to create template")
   }
 
@@ -52,7 +52,7 @@ export async function getWhatsAppTemplateById(businessAccountId: string, templat
 
   const data = await response.json()
   if (!response.ok) {
-    console.error("[v0] WhatsApp Template Fetch Error:", data)
+    console.error("[app] WhatsApp Template Fetch Error:", data)
     return null
   }
 
@@ -83,7 +83,7 @@ export async function sendWhatsAppMessage(phoneNumberId: string, to: string, mes
 
   const data = await response.json()
   if (!response.ok) {
-    console.error("[v0] WhatsApp API Error:", data)
+    console.error("[app] WhatsApp API Error:", data)
     throw new Error(data.error?.message || "Failed to send message")
   }
 
@@ -122,7 +122,7 @@ export async function uploadWhatsAppMedia(phoneNumberId: string, file: File) {
 
   const data = await response.json()
   if (!response.ok) {
-    console.error("[v0] WhatsApp Media Upload Error:", data)
+    console.error("[app] WhatsApp Media Upload Error:", data)
     throw new Error(data.error?.message || "Failed to upload media")
   }
 
@@ -140,7 +140,7 @@ export async function getWhatsAppMediaInfo(mediaId: string): Promise<WhatsAppMed
 
   const data = await response.json()
   if (!response.ok) {
-    console.error("[v0] WhatsApp Media Fetch Error:", data)
+    console.error("[app] WhatsApp Media Fetch Error:", data)
     throw new Error(data.error?.message || "Failed to fetch media info")
   }
 
@@ -158,7 +158,7 @@ export async function downloadWhatsAppMedia(mediaId: string) {
 
   if (!response.ok) {
     const text = await response.text()
-    console.error("[v0] WhatsApp Media Download Error:", text)
+    console.error("[app] WhatsApp Media Download Error:", text)
     throw new Error("Failed to download media")
   }
 

@@ -12,7 +12,7 @@ export async function GET(request: Request) {
   const challenge = searchParams.get("hub.challenge")
 
   if (mode === "subscribe" && token === VERIFY_TOKEN) {
-    console.log("[v0] Webhook Verified")
+    console.log("[app] Webhook Verified")
     return new Response(challenge, { status: 200 })
   }
 
@@ -36,7 +36,7 @@ export async function POST(request: Request) {
     const whatsappPhoneNumberId = value.metadata?.phone_number_id
 
     // Log the event for debugging
-    console.log(`[v0] Incoming message from ${msg.from} to ID ${whatsappPhoneNumberId}`)
+    console.log(`[app] Incoming message from ${msg.from} to ID ${whatsappPhoneNumberId}`)
 
     // 1. Upsert Contact
     const { data: contactData } = await supabase
@@ -90,10 +90,10 @@ export async function POST(request: Request) {
             public_url: publicUrl?.publicUrl,
           }
         } else {
-          console.error("[v0] Failed to upload media to storage:", uploadError)
+          console.error("[app] Failed to upload media to storage:", uploadError)
         }
       } catch (error) {
-        console.error("[v0] Failed to download WhatsApp media:", error)
+        console.error("[app] Failed to download WhatsApp media:", error)
       }
     }
 
@@ -117,7 +117,7 @@ export async function POST(request: Request) {
         const aiService = await AIService.fromProjectId(waNumberRecord.project_id)
 
         if (aiService) {
-          console.log(`[v0] AI Chatbot active for project: ${waNumberRecord.project_id}`)
+          console.log(`[app] AI Chatbot active for project: ${waNumberRecord.project_id}`)
 
           // Get recent conversation history (last 10 messages) for better context
           const { data: history } = await supabase
@@ -136,7 +136,7 @@ export async function POST(request: Request) {
               }))
               .filter((m) => m.content.trim() !== "") || []
 
-          // Generate response using Vercel AI SDK
+          // Generate response using the AI SDK
           const responseText = await aiService.generateResponse([
             ...conversation,
             { role: "user", content: msg.text.body },
@@ -158,7 +158,7 @@ export async function POST(request: Request) {
           }
         }
       } catch (error) {
-        console.error("[v0] Real-world AI response failed:", error)
+        console.error("[app] Real-world AI response failed:", error)
       }
     }
   }
