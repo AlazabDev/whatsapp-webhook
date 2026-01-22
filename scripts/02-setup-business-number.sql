@@ -21,4 +21,4 @@ INSERT INTO public.whatsapp_numbers (
 
 -- Adding a 'media' bucket to Supabase Storage if it doesn't exist
 -- Note: This requires the user to have the storage extension enabled.
--- v0 assumes the project is ready for media storage for WhatsApp attachments.
+-- the app assumes the project is ready for media storage for WhatsApp attachments.
