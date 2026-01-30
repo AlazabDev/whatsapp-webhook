@@ -1,5 +1,7 @@
-const API_VERSION = process.env.WHATSAPP_API_VERSION || "v21.0"
-const ACCESS_TOKEN = process.env.WHATSAPP_ACCESS_TOKEN
+import { env } from "./env"
+
+const API_VERSION = env.WHATSAPP_API_VERSION
+const ACCESS_TOKEN = env.WHATSAPP_ACCESS_TOKEN
 
 export type WhatsAppMediaInfo = {
   id: string
@@ -19,8 +21,6 @@ export async function createWhatsAppTemplate(
     components: any[]
   },
 ) {
-  if (!ACCESS_TOKEN) throw new Error("Missing WHATSAPP_ACCESS_TOKEN")
-
   const url = `https://graph.facebook.com/${API_VERSION}/${businessAccountId}/message_templates`
 
   const response = await fetch(url, {
@@ -42,8 +42,6 @@ export async function createWhatsAppTemplate(
 }
 
 export async function getWhatsAppTemplateById(businessAccountId: string, templateId: string) {
-  if (!ACCESS_TOKEN) throw new Error("Missing WHATSAPP_ACCESS_TOKEN")
-
   const url = `https://graph.facebook.com/${API_VERSION}/${templateId}`
 
   const response = await fetch(url, {
@@ -60,8 +58,6 @@ export async function getWhatsAppTemplateById(businessAccountId: string, templat
 }
 
 export async function sendWhatsAppMessage(phoneNumberId: string, to: string, message: any) {
-  if (!ACCESS_TOKEN) throw new Error("Missing WHATSAPP_ACCESS_TOKEN")
-
   const url = `https://graph.facebook.com/${API_VERSION}/${phoneNumberId}/messages`
 
   // Format the message body correctly
@@ -91,8 +87,6 @@ export async function sendWhatsAppMessage(phoneNumberId: string, to: string, mes
 }
 
 export async function getWhatsAppTemplates(businessAccountId: string) {
-  if (!ACCESS_TOKEN) throw new Error("Missing WHATSAPP_ACCESS_TOKEN")
-
   const url = `https://graph.facebook.com/${API_VERSION}/${businessAccountId}/message_templates`
 
   const response = await fetch(url, {
@@ -105,8 +99,6 @@ export async function getWhatsAppTemplates(businessAccountId: string) {
 
 // Add media upload function
 export async function uploadWhatsAppMedia(phoneNumberId: string, file: File) {
-  if (!ACCESS_TOKEN) throw new Error("Missing WHATSAPP_ACCESS_TOKEN")
-
   const url = `https://graph.facebook.com/${API_VERSION}/${phoneNumberId}/media`
   const formData = new FormData()
   formData.append("file", file)
@@ -130,8 +122,6 @@ export async function uploadWhatsAppMedia(phoneNumberId: string, file: File) {
 }
 
 export async function getWhatsAppMediaInfo(mediaId: string): Promise<WhatsAppMediaInfo> {
-  if (!ACCESS_TOKEN) throw new Error("Missing WHATSAPP_ACCESS_TOKEN")
-
   const url = `https://graph.facebook.com/${API_VERSION}/${mediaId}`
 
   const response = await fetch(url, {
@@ -148,8 +138,6 @@ export async function getWhatsAppMediaInfo(mediaId: string): Promise<WhatsAppMed
 }
 
 export async function downloadWhatsAppMedia(mediaId: string) {
-  if (!ACCESS_TOKEN) throw new Error("Missing WHATSAPP_ACCESS_TOKEN")
-
   const info = await getWhatsAppMediaInfo(mediaId)
 
   const response = await fetch(info.url, {
