@@ -192,7 +192,7 @@ export async function processWebhookEvent({ requestId, rawBody, body, signatureH
     if (messageRecord) {
       const { data: integrations } = await supabase
         .from("integrations")
-        .select("id, type, config")
+        .select("id, type")
         .eq("project_id", waNumberRecord.project_id)
         .eq("is_active", true)
 

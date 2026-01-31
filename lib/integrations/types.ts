@@ -14,8 +14,3 @@ export type IntegrationEvent = {
     publicUrl?: string
   }
 }
-
-export type IntegrationConfig = {
-  api_url?: string
-  api_key?: string
-}

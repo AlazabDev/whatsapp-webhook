@@ -13,6 +13,7 @@ This repository contains the WhatsApp webhook platform for self-hosted deploymen
    - `SUPABASE_SERVICE_ROLE_KEY`
    - `AUTH_PASSWORD_SALT`
    - `SESSION_SECRET`
+   - `BASIC_AUTH_USERS` (comma-separated `email:password:role` entries)
    - `WHATSAPP_ACCESS_TOKEN`
    - `WHATSAPP_API_VERSION` (optional, defaults to `v21.0`)
    - `WHATSAPP_APP_SECRET` (used to verify webhook signatures)
@@ -43,6 +44,13 @@ This deployment uses HTTP Basic Authentication for initial login, backed by the 
 Allowed roles are `admin`, `system`, `project_admin`, and `viewer`. The authentication guard protects dashboard routes while allowing WhatsApp webhook callbacks to reach `/api/webhook`.
 
 Passwords should be stored in the `users` table as SHA-256 hashes using `AUTH_PASSWORD_SALT` and sessions are issued via `SESSION_SECRET`.
+This deployment uses HTTP Basic Authentication with users defined in `BASIC_AUTH_USERS`. Each entry uses the format:
+
+```
+email:password:role
+```
+
+Allowed roles are `admin` and `system`. The authentication guard protects dashboard routes while allowing WhatsApp webhook callbacks to reach `/api/webhook`.
 
 ## Webhook Security
 

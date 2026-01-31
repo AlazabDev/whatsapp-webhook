@@ -5,7 +5,6 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { getSupabaseAdmin } from "@/lib/supabase"
 import { logger } from "@/lib/logger"
-import { MediaActions } from "./media-actions"
 
 const formatBytes = (bytes?: number | null) => {
   if (!bytes) return "—"
@@ -123,7 +122,24 @@ export default async function MediaPage() {
                     </TableCell>
                     <TableCell className="text-xs text-muted-foreground">{formatDateTime(item.created_at)}</TableCell>
                     <TableCell>
-                      <MediaActions id={item.id} publicUrl={item.public_url || undefined} />
+                      <div className="flex items-center gap-1">
+                        <Button variant="ghost" size="icon" className="h-8 w-8" asChild>
+                          <a href={item.public_url || "#"} target="_blank" rel="noreferrer">
+                            <Eye className="h-4 w-4" />
+                          </a>
+                        </Button>
+                        <Button variant="ghost" size="icon" className="h-8 w-8">
+                          <Copy className="h-4 w-4" />
+                        </Button>
+                        <Button variant="ghost" size="icon" className="h-8 w-8" asChild>
+                          <a href={item.public_url || "#"} download>
+                            <Download className="h-4 w-4" />
+                          </a>
+                        </Button>
+                        <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:text-destructive">
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
                     </TableCell>
                   </TableRow>
                 ))}

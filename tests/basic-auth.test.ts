@@ -7,8 +7,7 @@ const setupEnv = () => {
   process.env.NEXT_PUBLIC_SUPABASE_URL = "https://example.supabase.co"
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY = "anon"
   process.env.SUPABASE_SERVICE_ROLE_KEY = "service"
-  process.env.AUTH_PASSWORD_SALT = "salt"
-  process.env.SESSION_SECRET = "secret"
+  process.env.BASIC_AUTH_USERS = "mohamed@alazab.com:mohamed@202555:admin,admin@alazab.com:admin@202555:system"
   process.env.WHATSAPP_ACCESS_TOKEN = "token"
   process.env.WHATSAPP_WEBHOOK_VERIFY_TOKEN = "verify"
   process.env.WHATSAPP_APP_SECRET = "secret"
@@ -25,10 +24,14 @@ test("parseBasicAuth parses basic credentials", async () => {
   assert.deepEqual(parsed, { email: "mohamed@alazab.com", password: "mohamed@202555" })
 })
 
-test("hashPassword and verifyPassword match", async () => {
+test("validateCredentials accepts configured users", async () => {
   setupEnv()
-  const { hashPassword, verifyPassword } = await loadAuth()
-  const hash = await hashPassword("admin@202555")
-  assert.equal(await verifyPassword("admin@202555", hash), true)
-  assert.equal(await verifyPassword("bad", hash), false)
+  const { validateCredentials } = await loadAuth()
+  assert.ok(validateCredentials("admin@alazab.com", "admin@202555"))
+})
+
+test("validateCredentials rejects unknown users", async () => {
+  setupEnv()
+  const { validateCredentials } = await loadAuth()
+  assert.equal(validateCredentials("hacker@alazab.com", "bad"), null)
 })
