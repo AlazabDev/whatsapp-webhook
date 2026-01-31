@@ -1,6 +1,6 @@
 import { Sidebar } from "@/components/dashboard/sidebar"
 import { Button } from "@/components/ui/button"
-import { Eye, Copy, Download, Trash2, Calendar } from "lucide-react"
+import { Calendar } from "lucide-react"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { getSupabaseAdmin } from "@/lib/supabase"

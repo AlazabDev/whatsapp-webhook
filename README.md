@@ -11,6 +11,8 @@ This repository contains the WhatsApp webhook platform for self-hosted deploymen
    - `NEXT_PUBLIC_SUPABASE_URL`
    - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
    - `SUPABASE_SERVICE_ROLE_KEY`
+   - `AUTH_PASSWORD_SALT`
+   - `SESSION_SECRET`
    - `BASIC_AUTH_USERS` (comma-separated `email:password:role` entries)
    - `WHATSAPP_ACCESS_TOKEN`
    - `WHATSAPP_API_VERSION` (optional, defaults to `v21.0`)
@@ -22,6 +24,12 @@ This repository contains the WhatsApp webhook platform for self-hosted deploymen
    - `WEBHOOK_RATE_LIMIT_WINDOW_SEC`
    - `QUEUE_RATE_LIMIT_MAX`
    - `QUEUE_RATE_LIMIT_WINDOW_SEC`
+   - `ERP_API_URL`
+   - `ERP_API_KEY`
+   - `CRM_API_URL`
+   - `CRM_API_KEY`
+   - `HELPDESK_API_URL`
+   - `HELPDESK_API_KEY`
 3. Configure your WhatsApp Business webhook in Meta:
    - Callback URL: `https://webhook.alazab.com/api/webhook`
    - Verify token: set to the same value as `WHATSAPP_WEBHOOK_VERIFY_TOKEN`
@@ -32,6 +40,10 @@ This repository contains the WhatsApp webhook platform for self-hosted deploymen
 
 ## Authentication (Basic Auth)
 
+This deployment uses HTTP Basic Authentication for initial login, backed by the `users` table.
+Allowed roles are `admin`, `system`, `project_admin`, and `viewer`. The authentication guard protects dashboard routes while allowing WhatsApp webhook callbacks to reach `/api/webhook`.
+
+Passwords should be stored in the `users` table as SHA-256 hashes using `AUTH_PASSWORD_SALT` and sessions are issued via `SESSION_SECRET`.
 This deployment uses HTTP Basic Authentication with users defined in `BASIC_AUTH_USERS`. Each entry uses the format:
 
 ```
@@ -176,6 +188,39 @@ create table if not exists integrations (
   config jsonb,
   created_at timestamptz default now()
 );
+
+create table if not exists webhook_endpoints (
+  id uuid primary key default gen_random_uuid(),
+  project_id uuid not null,
+  url text not null,
+  events jsonb,
+  is_active boolean default true,
+  created_at timestamptz default now()
+);
+
+create table if not exists users (
+  id uuid primary key default gen_random_uuid(),
+  email text not null,
+  password_hash text not null,
+  role text not null default 'viewer',
+  is_active boolean default true,
+  created_at timestamptz default now()
+);
+
+create table if not exists templates (
+  id uuid primary key default gen_random_uuid(),
+  wa_template_name text not null,
+  wa_template_code text not null,
+  phone_number_id uuid not null,
+  status text not null,
+  category text not null,
+  language text not null,
+  preview_text text,
+  variables_count int default 0,
+  created_at timestamptz default now()
+);
+
+create unique index if not exists templates_unique_idx on templates (wa_template_code, phone_number_id);
 ```
 
 ## How It Works

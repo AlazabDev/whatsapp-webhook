@@ -97,6 +97,21 @@ export async function getWhatsAppTemplates(businessAccountId: string) {
   return data.data || []
 }
 
+export async function deleteWhatsAppTemplate(templateId: string) {
+  const url = `https://graph.facebook.com/${API_VERSION}/${templateId}`
+  const response = await fetch(url, {
+    method: "DELETE",
+    headers: { Authorization: `Bearer ${ACCESS_TOKEN}` },
+  })
+
+  const data = await response.json()
+  if (!response.ok) {
+    console.error("[app] WhatsApp Template Delete Error:", data)
+    return false
+  }
+  return true
+}
+
 // Add media upload function
 export async function uploadWhatsAppMedia(phoneNumberId: string, file: File) {
   const url = `https://graph.facebook.com/${API_VERSION}/${phoneNumberId}/media`
