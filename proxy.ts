@@ -1,33 +1,42 @@
+import { createServerClient } from "@supabase/ssr"
 import { NextResponse } from "next/server"
 import type { NextRequest } from "next/server"
-import { parseBasicAuth, validateCredentials } from "./lib/auth"
+import { getSafeRedirect } from "@/lib/auth-redirect"
 
-export function proxy(request: NextRequest) {
-  const authHeader = request.headers.get("authorization")
+export async function proxy(request: NextRequest) {
+  const response = NextResponse.next()
+  const supabase = createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL ?? "",
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? "",
+    {
+      cookies: {
+        getAll: () => request.cookies.getAll(),
+        setAll: (cookies) => {
+          cookies.forEach(({ name, value, options }) => {
+            response.cookies.set(name, value, options)
+          })
+        },
+      },
+    },
+  )
 
-  if (!authHeader) {
-    return new NextResponse("Authentication required", {
-      status: 401,
-      headers: { "WWW-Authenticate": "Basic realm=\"Secure Area\"" },
-    })
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+
+  if (!user) {
+    const loginUrl = request.nextUrl.clone()
+    loginUrl.pathname = "/login"
+    const returnPath = `${request.nextUrl.pathname}${request.nextUrl.search}`
+    loginUrl.searchParams.set("redirect", getSafeRedirect(returnPath))
+    return NextResponse.redirect(loginUrl)
   }
 
-  const credentials = parseBasicAuth(authHeader, (value) => atob(value))
-  const user = credentials ? validateCredentials(credentials.email, credentials.password) : null
-  if (!credentials || !user) {
-    return new NextResponse("Invalid credentials", {
-      status: 401,
-      headers: { "WWW-Authenticate": "Basic realm=\"Secure Area\"" },
-    })
-  }
-
-  if (user.role !== "admin" && user.role !== "system") {
-    return new NextResponse("Forbidden", { status: 403 })
-  }
-
-  return NextResponse.next()
+  return response
 }
 
 export const config = {
-  matcher: ["/((?!api/webhook|api/queue|webhook|webhooks|_next/static|_next/image|favicon.ico).*)"],
+  matcher: [
+    "/((?!api/webhook|api/queue|webhook|webhooks|login|auth/callback|_next/static|_next/image|favicon.ico).*)",
+  ],
 }
