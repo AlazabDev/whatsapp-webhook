@@ -1,7 +1,9 @@
-import { env } from "./env"
+import { getWhatsappApiEnv } from "./env.server"
 
-const API_VERSION = env.WHATSAPP_API_VERSION
-const ACCESS_TOKEN = env.WHATSAPP_ACCESS_TOKEN
+const getWhatsappConfig = () => {
+  const { WHATSAPP_API_VERSION, WHATSAPP_ACCESS_TOKEN } = getWhatsappApiEnv()
+  return { apiVersion: WHATSAPP_API_VERSION, accessToken: WHATSAPP_ACCESS_TOKEN }
+}
 
 export type WhatsAppMediaInfo = {
   id: string
@@ -21,12 +23,13 @@ export async function createWhatsAppTemplate(
     components: any[]
   },
 ) {
-  const url = `https://graph.facebook.com/${API_VERSION}/${businessAccountId}/message_templates`
+  const { apiVersion, accessToken } = getWhatsappConfig()
+  const url = `https://graph.facebook.com/${apiVersion}/${businessAccountId}/message_templates`
 
   const response = await fetch(url, {
     method: "POST",
     headers: {
-      Authorization: `Bearer ${ACCESS_TOKEN}`,
+      Authorization: `Bearer ${accessToken}`,
       "Content-Type": "application/json",
     },
     body: JSON.stringify(templateData),
@@ -42,10 +45,11 @@ export async function createWhatsAppTemplate(
 }
 
 export async function getWhatsAppTemplateById(businessAccountId: string, templateId: string) {
-  const url = `https://graph.facebook.com/${API_VERSION}/${templateId}`
+  const { apiVersion, accessToken } = getWhatsappConfig()
+  const url = `https://graph.facebook.com/${apiVersion}/${templateId}`
 
   const response = await fetch(url, {
-    headers: { Authorization: `Bearer ${ACCESS_TOKEN}` },
+    headers: { Authorization: `Bearer ${accessToken}` },
   })
 
   const data = await response.json()
@@ -58,7 +62,8 @@ export async function getWhatsAppTemplateById(businessAccountId: string, templat
 }
 
 export async function sendWhatsAppMessage(phoneNumberId: string, to: string, message: any) {
-  const url = `https://graph.facebook.com/${API_VERSION}/${phoneNumberId}/messages`
+  const { apiVersion, accessToken } = getWhatsappConfig()
+  const url = `https://graph.facebook.com/${apiVersion}/${phoneNumberId}/messages`
 
   // Format the message body correctly
   const messageBody = typeof message === "string" ? { text: { body: message } } : message
@@ -66,7 +71,7 @@ export async function sendWhatsAppMessage(phoneNumberId: string, to: string, mes
   const response = await fetch(url, {
     method: "POST",
     headers: {
-      Authorization: `Bearer ${ACCESS_TOKEN}`,
+      Authorization: `Bearer ${accessToken}`,
       "Content-Type": "application/json",
     },
     body: JSON.stringify({
@@ -87,10 +92,11 @@ export async function sendWhatsAppMessage(phoneNumberId: string, to: string, mes
 }
 
 export async function getWhatsAppTemplates(businessAccountId: string) {
-  const url = `https://graph.facebook.com/${API_VERSION}/${businessAccountId}/message_templates`
+  const { apiVersion, accessToken } = getWhatsappConfig()
+  const url = `https://graph.facebook.com/${apiVersion}/${businessAccountId}/message_templates`
 
   const response = await fetch(url, {
-    headers: { Authorization: `Bearer ${ACCESS_TOKEN}` },
+    headers: { Authorization: `Bearer ${accessToken}` },
   })
 
   const data = await response.json()
@@ -103,10 +109,11 @@ export async function getWhatsAppTemplates(businessAccountId: string) {
 }
 
 export async function deleteWhatsAppTemplate(templateId: string) {
-  const url = `https://graph.facebook.com/${API_VERSION}/${templateId}`
+  const { apiVersion, accessToken } = getWhatsappConfig()
+  const url = `https://graph.facebook.com/${apiVersion}/${templateId}`
   const response = await fetch(url, {
     method: "DELETE",
-    headers: { Authorization: `Bearer ${ACCESS_TOKEN}` },
+    headers: { Authorization: `Bearer ${accessToken}` },
   })
 
   const data = await response.json()
@@ -119,7 +126,8 @@ export async function deleteWhatsAppTemplate(templateId: string) {
 
 // Add media upload function
 export async function uploadWhatsAppMedia(phoneNumberId: string, file: File) {
-  const url = `https://graph.facebook.com/${API_VERSION}/${phoneNumberId}/media`
+  const { apiVersion, accessToken } = getWhatsappConfig()
+  const url = `https://graph.facebook.com/${apiVersion}/${phoneNumberId}/media`
   const formData = new FormData()
   formData.append("file", file)
   formData.append("messaging_product", "whatsapp")
@@ -127,7 +135,7 @@ export async function uploadWhatsAppMedia(phoneNumberId: string, file: File) {
   const response = await fetch(url, {
     method: "POST",
     headers: {
-      Authorization: `Bearer ${ACCESS_TOKEN}`,
+      Authorization: `Bearer ${accessToken}`,
     },
     body: formData,
   })
@@ -142,10 +150,11 @@ export async function uploadWhatsAppMedia(phoneNumberId: string, file: File) {
 }
 
 export async function getWhatsAppMediaInfo(mediaId: string): Promise<WhatsAppMediaInfo> {
-  const url = `https://graph.facebook.com/${API_VERSION}/${mediaId}`
+  const { apiVersion, accessToken } = getWhatsappConfig()
+  const url = `https://graph.facebook.com/${apiVersion}/${mediaId}`
 
   const response = await fetch(url, {
-    headers: { Authorization: `Bearer ${ACCESS_TOKEN}` },
+    headers: { Authorization: `Bearer ${accessToken}` },
   })
 
   const data = await response.json()
@@ -158,10 +167,11 @@ export async function getWhatsAppMediaInfo(mediaId: string): Promise<WhatsAppMed
 }
 
 export async function downloadWhatsAppMedia(mediaId: string) {
+  const { accessToken } = getWhatsappConfig()
   const info = await getWhatsAppMediaInfo(mediaId)
 
   const response = await fetch(info.url, {
-    headers: { Authorization: `Bearer ${ACCESS_TOKEN}` },
+    headers: { Authorization: `Bearer ${accessToken}` },
   })
 
   if (!response.ok) {

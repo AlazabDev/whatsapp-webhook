@@ -1,4 +1,4 @@
-import { env } from "./env"
+import { getSessionEnv } from "./env.server"
 
 type SessionPayload = {
   userId: string
@@ -12,10 +12,11 @@ const base64Url = (input: string) =>
 const base64UrlDecode = (input: string) => atob(input.replace(/-/g, "+").replace(/_/g, "/"))
 
 const sign = async (payload: string) => {
+  const { SESSION_SECRET } = getSessionEnv()
   const encoder = new TextEncoder()
   const key = await crypto.subtle.importKey(
     "raw",
-    encoder.encode(env.SESSION_SECRET),
+    encoder.encode(SESSION_SECRET),
     { name: "HMAC", hash: "SHA-256" },
     false,
     ["sign"],
@@ -25,10 +26,11 @@ const sign = async (payload: string) => {
 }
 
 const verify = async (payload: string, signature: string) => {
+  const { SESSION_SECRET } = getSessionEnv()
   const encoder = new TextEncoder()
   const key = await crypto.subtle.importKey(
     "raw",
-    encoder.encode(env.SESSION_SECRET),
+    encoder.encode(SESSION_SECRET),
     { name: "HMAC", hash: "SHA-256" },
     false,
     ["verify"],
