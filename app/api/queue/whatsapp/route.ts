@@ -1,14 +1,15 @@
 import { NextResponse } from "next/server"
-import { env } from "@/lib/env"
+import { getQueueEnv } from "@/lib/env.server"
 import { logger } from "@/lib/logger"
 import { checkRateLimit, getClientIp, logRateLimitRejection } from "@/lib/rate-limit"
 import { processPendingAiJobs } from "@/lib/message-queue"
 
 export async function POST(request: Request) {
   const requestId = crypto.randomUUID()
+  const { QUEUE_RATE_LIMIT_MAX, QUEUE_RATE_LIMIT_WINDOW_SEC, QUEUE_SECRET } = getQueueEnv()
   const rateLimitKey = `${getClientIp(request)}:queue`
-  const maxRequests = Number(env.QUEUE_RATE_LIMIT_MAX) || 30
-  const windowMs = (Number(env.QUEUE_RATE_LIMIT_WINDOW_SEC) || 60) * 1000
+  const maxRequests = Number(QUEUE_RATE_LIMIT_MAX) || 30
+  const windowMs = (Number(QUEUE_RATE_LIMIT_WINDOW_SEC) || 60) * 1000
   const rateLimitResult = checkRateLimit(rateLimitKey, { max: maxRequests, windowMs })
 
   if (!rateLimitResult.allowed) {
@@ -17,7 +18,7 @@ export async function POST(request: Request) {
   }
   const secret = request.headers.get("x-queue-secret")
 
-  if (!secret || secret !== env.QUEUE_SECRET) {
+  if (!secret || secret !== QUEUE_SECRET) {
     logger.warn("Queue authentication failed", { requestId })
     return new Response("Unauthorized", { status: 401 })
   }

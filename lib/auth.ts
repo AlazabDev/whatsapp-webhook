@@ -1,4 +1,4 @@
-import { env } from "./env"
+import { getAuthEnv } from "./env.server"
 
 type AuthUser = {
   email: string
@@ -6,8 +6,11 @@ type AuthUser = {
   role: "admin" | "system"
 }
 
-const parseUsers = () => {
-  const entries = env.BASIC_AUTH_USERS.split(",").map((value) => value.trim()).filter(Boolean)
+const parseUsers = (rawUsers: string) => {
+  const entries = rawUsers
+    .split(",")
+    .map((value) => value.trim())
+    .filter(Boolean)
   const users = new Map<string, AuthUser>()
 
   for (const entry of entries) {
@@ -21,7 +24,14 @@ const parseUsers = () => {
   return users
 }
 
-const allowedUsers = parseUsers()
+let cachedUsers: Map<string, AuthUser> | null = null
+
+const getAllowedUsers = () => {
+  if (cachedUsers) return cachedUsers
+  const { BASIC_AUTH_USERS } = getAuthEnv()
+  cachedUsers = parseUsers(BASIC_AUTH_USERS)
+  return cachedUsers
+}
 
 export function parseBasicAuth(
   authHeader: string,
@@ -39,7 +49,7 @@ export function parseBasicAuth(
 }
 
 export function validateCredentials(email: string, password: string) {
-  const user = allowedUsers.get(email)
+  const user = getAllowedUsers().get(email)
   if (!user) return null
   if (user.password !== password) return null
   return user

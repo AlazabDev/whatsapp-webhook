@@ -1,4 +1,4 @@
-import { env } from "./env"
+import { getLoggerEnv } from "./env.server"
 
 type LogLevel = "debug" | "info" | "warn" | "error"
 
@@ -18,7 +18,7 @@ const levelToConsole: Record<LogLevel, (...args: unknown[]) => void> = {
 
 export type LogMeta = Record<string, unknown>
 
-export const shouldLog = (level: LogLevel) => levelPriority[level] >= levelPriority[env.LOG_LEVEL]
+export const shouldLog = (level: LogLevel) => levelPriority[level] >= levelPriority[getLoggerEnv().LOG_LEVEL]
 
 export const logger = {
   log(level: LogLevel, message: string, meta: LogMeta = {}) {
