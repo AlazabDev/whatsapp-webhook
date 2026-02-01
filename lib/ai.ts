@@ -1,11 +1,12 @@
 import { generateText } from "ai"
-import { supabase } from "./supabase"
+import { getSupabaseClient } from "./supabase"
 
 /**
  * Generates an AI response for a specific project based on its configuration
  */
 export async function generateAIResponse(projectId: string, userMessage: string) {
   try {
+    const supabase = getSupabaseClient()
     // 1. Fetch AI Configuration for the project
     const { data: config, error } = await supabase
       .from("ai_configurations")
