@@ -32,7 +32,7 @@ const getFileName = (path?: string | null) => {
 }
 
 export default async function MediaPage() {
-  const supabase = await getSupabaseServer()
+  const supabase = getSupabaseServer()
   const { data: mediaItems, error } = await supabase
     .from("media_files")
     .select("id, media_id, mime_type, file_size, public_url, storage_path, created_at, contact:contact_id(wa_id)")

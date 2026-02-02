@@ -5,7 +5,7 @@ import { Webhook, Plus, ArrowUpRight, MoreVertical, CheckCircle2, AlertCircle } 
 import { getSupabaseServer } from "@/lib/supabase"
 
 export default async function WebhooksPage() {
-  const supabase = await getSupabaseServer()
+  const supabase = getSupabaseServer()
   const { data: endpoints } = await supabase
     .from("webhooks")
     .select("id, url, events, is_active")
