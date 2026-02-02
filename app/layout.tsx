@@ -10,7 +10,7 @@ const _geistMono = Geist_Mono({ subsets: ["latin"] })
 export const metadata: Metadata = {
   title: "العزب هاب - منصة واتساب للأعمال",
   description: "منصة إدارة واتساب المتكاملة من العزب للأعمال",
-  generator: "v0.app",
+  generator: "whatsapp-platform",
   icons: {
     icon: [
       {

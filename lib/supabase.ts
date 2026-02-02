@@ -1,12 +1,8 @@
-import { createClient } from "@supabase/supabase-js"
+import { createSupabaseBrowserClient } from "@/lib/supabase/client"
+import { createSupabaseAdminClient, createSupabaseServerClient } from "@/lib/supabase/server"
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+export const getSupabaseClient = () => createSupabaseBrowserClient()
 
-// Singleton pattern for Supabase client
-export const supabase = createClient(supabaseUrl, supabaseAnonKey)
+export const getSupabaseServer = () => createSupabaseServerClient()
 
-// Server-side client (requires service role for admin tasks)
-export const getSupabaseAdmin = () => {
-  return createClient(supabaseUrl, process.env.SUPABASE_SERVICE_ROLE_KEY!)
-}
+export const getSupabaseAdmin = () => createSupabaseAdminClient()

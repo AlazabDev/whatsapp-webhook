@@ -1,11 +1,12 @@
 import { generateText } from "ai"
-import { supabase } from "./supabase"
+import { getSupabaseClient } from "./supabase"
 
 /**
  * Generates an AI response for a specific project based on its configuration
  */
 export async function generateAIResponse(projectId: string, userMessage: string) {
   try {
+    const supabase = getSupabaseClient()
     // 1. Fetch AI Configuration for the project
     const { data: config, error } = await supabase
       .from("ai_configurations")
@@ -14,7 +15,7 @@ export async function generateAIResponse(projectId: string, userMessage: string)
       .single()
 
     if (error || !config || !config.is_enabled) {
-      console.log("[v0] AI disabled or config not found for project:", projectId)
+      console.log("[app] AI disabled or config not found for project:", projectId)
       return null
     }
 
@@ -32,7 +33,7 @@ export async function generateAIResponse(projectId: string, userMessage: string)
 
     return text
   } catch (error) {
-    console.error("[v0] Error generating AI response:", error)
+    console.error("[app] Error generating AI response:", error)
     return null
   }
 }
