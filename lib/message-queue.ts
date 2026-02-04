@@ -30,6 +30,18 @@ export async function enqueueAiReplyJob(payload: AiJobPayload) {
 
 export async function processPendingAiJobs(batchSize = 10) {
   const supabase = getSupabaseAdmin()
+  const now = new Date()
+  const staleBefore = new Date(now.getTime() - 10 * 60 * 1000).toISOString()
+
+  const { error: recycleError } = await supabase
+    .from("message_jobs")
+    .update({ status: "pending", updated_at: now.toISOString() })
+    .eq("status", "processing")
+    .lt("updated_at", staleBefore)
+
+  if (recycleError) {
+    logger.error("Failed to recycle stuck AI jobs", { error: recycleError })
+  }
 
   const { data: jobs, error } = await supabase
     .from("message_jobs")
@@ -51,7 +63,7 @@ export async function processPendingAiJobs(batchSize = 10) {
 
     const { error: markError } = await supabase
       .from("message_jobs")
-      .update({ status: "processing" })
+      .update({ status: "processing", updated_at: new Date().toISOString() })
       .eq("id", job.id)
       .eq("status", "pending")
 
@@ -71,7 +83,7 @@ export async function processPendingAiJobs(batchSize = 10) {
         .limit(1)
 
       if (!steps?.length) {
-        await supabase.from("message_jobs").update({ status: "completed" }).eq("id", job.id)
+        await supabase.from("message_jobs").update({ status: "completed", updated_at: new Date().toISOString() }).eq("id", job.id)
         processed += 1
         continue
       }
@@ -85,14 +97,14 @@ export async function processPendingAiJobs(batchSize = 10) {
         .maybeSingle()
 
       if (existingReply) {
-        await supabase.from("message_jobs").update({ status: "completed" }).eq("id", job.id)
+        await supabase.from("message_jobs").update({ status: "completed", updated_at: new Date().toISOString() }).eq("id", job.id)
         processed += 1
         continue
       }
 
       const aiService = await AIService.fromProjectId(payload.project_id)
       if (!aiService) {
-        await supabase.from("message_jobs").update({ status: "completed" }).eq("id", job.id)
+        await supabase.from("message_jobs").update({ status: "completed", updated_at: new Date().toISOString() }).eq("id", job.id)
         processed += 1
         continue
       }
@@ -133,11 +145,14 @@ export async function processPendingAiJobs(batchSize = 10) {
         })
       }
 
-      await supabase.from("message_jobs").update({ status: "completed" }).eq("id", job.id)
+      await supabase.from("message_jobs").update({ status: "completed", updated_at: new Date().toISOString() }).eq("id", job.id)
       processed += 1
     } catch (error) {
       logger.error("AI job processing failed", { error, jobId: job.id })
-      await supabase.from("message_jobs").update({ status: "failed", error: String(error) }).eq("id", job.id)
+      await supabase
+        .from("message_jobs")
+        .update({ status: "failed", error: String(error), updated_at: new Date().toISOString() })
+        .eq("id", job.id)
       failed += 1
     }
   }
