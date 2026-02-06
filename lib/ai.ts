@@ -14,7 +14,7 @@ export async function generateAIResponse(projectId: string, userMessage: string)
       .eq("project_id", projectId)
       .single()
 
-    if (error || !config || !config.is_enabled) {
+    if (error || !config || !config.is_active) {
       console.log("[app] AI disabled or config not found for project:", projectId)
       return null
     }
