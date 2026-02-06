@@ -22,29 +22,38 @@ export function LoginForm() {
     setErrorMessage(null)
     setIsSubmitting(true)
 
-    const supabase = createSupabaseBrowserClient()
-    const { error } = await supabase.auth.signInWithPassword({ email, password })
+    try {
+      const supabase = createSupabaseBrowserClient()
+      const { error } = await supabase.auth.signInWithPassword({ email, password })
 
-    if (error) {
-      setErrorMessage(error.message)
+      if (error) {
+        setErrorMessage(error.message || "حدث خطأ في تسجيل الدخول")
+        setIsSubmitting(false)
+        return
+      }
+
+      router.replace(nextPath)
+    } catch (err) {
+      setErrorMessage("خطأ في الاتصال بالخادم. تأكد من تكوين Supabase.")
       setIsSubmitting(false)
-      return
     }
-
-    router.replace(nextPath)
   }
 
   const handleGoogleLogin = async () => {
     setErrorMessage(null)
-    const supabase = createSupabaseBrowserClient()
-    const redirectTo = `${window.location.origin}/auth/callback`
-    const { error } = await supabase.auth.signInWithOAuth({
-      provider: "google",
-      options: { redirectTo },
-    })
+    try {
+      const supabase = createSupabaseBrowserClient()
+      const redirectTo = `${window.location.origin}/auth/callback`
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: "google",
+        options: { redirectTo },
+      })
 
-    if (error) {
-      setErrorMessage(error.message)
+      if (error) {
+        setErrorMessage(error.message || "فشل تسجيل الدخول عبر Google")
+      }
+    } catch (err) {
+      setErrorMessage("خطأ في الاتصال بالخادم. تأكد من تكوين Supabase.")
     }
   }
 
@@ -96,7 +105,7 @@ export function LoginForm() {
         </div>
       </div>
 
-      <Button variant="outline" className="w-full" type="button" onClick={handleGoogleLogin}>
+      <Button variant="outline" className="w-full" type="button" onClick={handleGoogleLogin} disabled={isSubmitting}>
         تسجيل الدخول عبر Google
       </Button>
     </div>
