@@ -1,34 +1,104 @@
-import { AIService } from "./ai-service"
 import { getSupabaseAdmin } from "./supabase"
-import { sendWhatsAppMessage } from "./whatsapp"
 import { logger } from "./logger"
 
-type AiJobPayload = {
-  inbound_message_id: string
-  contact_id: string
+type MessageJobPayload = {
+  message_id: string
+  whatsapp_message_id: string
+  contact_id?: string
   whatsapp_number_id: string
-  project_id: string
-  workflow_id: string
-  whatsapp_phone_number_id: string
-  recipient: string
-  message_body: string
+  phone_number_id?: string
+  business_account_id?: string
 }
 
-export async function enqueueAiReplyJob(payload: AiJobPayload) {
+type ProcessingStage = "RECEIVED" | "PARSED" | "CLASSIFIED" | "ROUTED" | "ACTIONED" | "COMPLETED"
+
+const updateMessageStage = async (messageId: string, stage: ProcessingStage, intent?: string | null) => {
   const supabase = getSupabaseAdmin()
+  const updatePayload: Record<string, string | null> = {
+    processing_stage: stage,
+  }
 
-  const { error } = await supabase.from("message_jobs").insert({
-    type: "ai_reply",
-    status: "pending",
-    payload,
-  })
+  if (intent !== undefined) {
+    updatePayload.intent = intent
+  }
 
+  if (stage === "COMPLETED") {
+    updatePayload.processed_at = new Date().toISOString()
+  }
+
+  const { error } = await supabase.from("messages").update(updatePayload).eq("id", messageId)
   if (error) {
-    logger.error("Failed to enqueue AI reply job", { error, payload })
+    logger.error("Failed to update message processing stage", { error, messageId, stage })
   }
 }
 
-export async function processPendingAiJobs(batchSize = 10) {
+const parseMessage = (message: { body?: string | null; type?: string | null }) => {
+  const text = message.body?.trim() || ""
+  return {
+    type: message.type || "unknown",
+    text,
+    hasText: text.length > 0,
+  }
+}
+
+const classifyMessage = (parsed: { type: string; text: string; hasText: boolean }) => {
+  if (!parsed.hasText) return "non_text"
+  const lower = parsed.text.toLowerCase()
+  if (lower.includes("price") || lower.includes("سعر")) return "pricing"
+  if (lower.includes("help") || lower.includes("مساعدة")) return "support"
+  if (lower.includes("order") || lower.includes("طلب")) return "order"
+  return "general"
+}
+
+const routeMessage = async (payload: {
+  messageId: string
+  intent: string
+  phoneNumberId?: string
+  businessAccountId?: string
+}) => {
+  logger.info("Message routed", payload)
+  // TODO: handleStatusUpdate()
+  // TODO: handleMediaDownload()
+  // TODO: triggerWorkflow()
+}
+
+const processMessageJob = async (jobId: string, payload: MessageJobPayload) => {
+  const supabase = getSupabaseAdmin()
+  const { data: message, error } = await supabase
+    .from("messages")
+    .select("id, body, type")
+    .eq("id", payload.message_id)
+    .maybeSingle()
+
+  if (error) {
+    throw new Error(`message fetch failed: ${error.message}`)
+  }
+
+  if (!message) {
+    throw new Error("message not found")
+  }
+
+  await updateMessageStage(message.id, "PARSED")
+  const parsed = parseMessage({ body: message.body, type: message.type })
+
+  const intent = classifyMessage(parsed)
+  await updateMessageStage(message.id, "CLASSIFIED", intent)
+
+  await updateMessageStage(message.id, "ROUTED", intent)
+  await routeMessage({
+    messageId: message.id,
+    intent,
+    phoneNumberId: payload.phone_number_id,
+    businessAccountId: payload.business_account_id,
+  })
+
+  await updateMessageStage(message.id, "ACTIONED", intent)
+  await updateMessageStage(message.id, "COMPLETED", intent)
+
+  logger.info("Message job processed", { jobId, messageId: message.id, intent })
+}
+
+export async function processPendingMessageJobs(batchSize = 10) {
   const supabase = getSupabaseAdmin()
   const now = new Date()
   const staleBefore = new Date(now.getTime() - 10 * 60 * 1000).toISOString()
@@ -40,18 +110,18 @@ export async function processPendingAiJobs(batchSize = 10) {
     .lt("updated_at", staleBefore)
 
   if (recycleError) {
-    logger.error("Failed to recycle stuck AI jobs", { error: recycleError })
+    logger.error("Failed to recycle stuck message jobs", { error: recycleError })
   }
 
   const { data: jobs, error } = await supabase
     .from("message_jobs")
     .select("id, payload")
-    .eq("type", "ai_reply")
+    .eq("type", "message_process")
     .eq("status", "pending")
     .limit(batchSize)
 
   if (error) {
-    logger.error("Failed to fetch AI reply jobs", { error })
+    logger.error("Failed to fetch message jobs", { error })
     return { processed: 0, failed: 0 }
   }
 
@@ -59,7 +129,7 @@ export async function processPendingAiJobs(batchSize = 10) {
   let failed = 0
 
   for (const job of jobs ?? []) {
-    const payload = job.payload as AiJobPayload
+    const payload = job.payload as MessageJobPayload
 
     const { error: markError } = await supabase
       .from("message_jobs")
@@ -68,87 +138,17 @@ export async function processPendingAiJobs(batchSize = 10) {
       .eq("status", "pending")
 
     if (markError) {
-      logger.error("Failed to mark AI job as processing", { error: markError, jobId: job.id })
+      logger.error("Failed to mark message job as processing", { error: markError, jobId: job.id })
       failed += 1
       continue
     }
 
     try {
-      const { data: steps } = await supabase
-        .from("workflow_steps")
-        .select("id")
-        .eq("workflow_id", payload.workflow_id)
-        .eq("type", "ai_response")
-        .eq("is_active", true)
-        .limit(1)
-
-      if (!steps?.length) {
-        await supabase.from("message_jobs").update({ status: "completed", updated_at: new Date().toISOString() }).eq("id", job.id)
-        processed += 1
-        continue
-      }
-
-      const { data: existingReply } = await supabase
-        .from("messages")
-        .select("id")
-        .eq("direction", "outbound")
-        .eq("contact_id", payload.contact_id)
-        .contains("metadata", { inbound_message_id: payload.inbound_message_id })
-        .maybeSingle()
-
-      if (existingReply) {
-        await supabase.from("message_jobs").update({ status: "completed", updated_at: new Date().toISOString() }).eq("id", job.id)
-        processed += 1
-        continue
-      }
-
-      const aiService = await AIService.fromProjectId(payload.project_id)
-      if (!aiService) {
-        await supabase.from("message_jobs").update({ status: "completed", updated_at: new Date().toISOString() }).eq("id", job.id)
-        processed += 1
-        continue
-      }
-
-      const { data: history } = await supabase
-        .from("messages")
-        .select("body, direction")
-        .eq("contact_id", payload.contact_id)
-        .order("created_at", { ascending: false })
-        .limit(10)
-
-      const conversation =
-        history
-          ?.reverse()
-          .map((m) => ({
-            role: m.direction === "inbound" ? ("user" as const) : ("assistant" as const),
-            content: m.body || "",
-          }))
-          .filter((m) => m.content.trim() !== "") || []
-
-      const responseText = await aiService.generateResponse([
-        ...conversation,
-        { role: "user", content: payload.message_body },
-      ])
-
-      if (responseText) {
-        await sendWhatsAppMessage(payload.whatsapp_phone_number_id, payload.recipient, responseText)
-
-        await supabase.from("messages").insert({
-          contact_id: payload.contact_id,
-          whatsapp_number_id: payload.whatsapp_number_id,
-          project_id: payload.project_id,
-          workflow_id: payload.workflow_id,
-          type: "text",
-          direction: "outbound",
-          body: responseText,
-          metadata: { ai_generated: true, source: "alazab-hub-ai", inbound_message_id: payload.inbound_message_id },
-        })
-      }
-
+      await processMessageJob(job.id, payload)
       await supabase.from("message_jobs").update({ status: "completed", updated_at: new Date().toISOString() }).eq("id", job.id)
       processed += 1
     } catch (error) {
-      logger.error("AI job processing failed", { error, jobId: job.id })
+      logger.error("Message job processing failed", { error, jobId: job.id })
       await supabase
         .from("message_jobs")
         .update({ status: "failed", error: String(error), updated_at: new Date().toISOString() })

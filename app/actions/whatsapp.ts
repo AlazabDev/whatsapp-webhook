@@ -16,14 +16,13 @@ export async function syncTemplates(phoneNumberId: string) {
 
   const supabase = getSupabaseAdmin()
   
-  // <CHANGE> Get UUID for phone number
-  const { data: phoneNumber } = await supabase
+  const { data: phoneNumber, error } = await supabase
     .from("whatsapp_numbers")
     .select("id")
     .eq("phone_number_id", phoneNumberId)
     .single()
 
-  if (!phoneNumber) throw new Error("Phone number not found in database")
+  if (error || !phoneNumber?.id) throw new Error("Phone number not found in database")
 
   const templates = await getWhatsAppTemplates(BUSINESS_ACCOUNT_ID)
 
@@ -63,20 +62,19 @@ export async function createAndSubmitTemplate(
 
   const supabase = getSupabaseAdmin()
 
-  // Get UUID for phone number
-  const { data: phoneNumber } = await supabase
+  const { data: phoneNumber, error: phoneError } = await supabase
     .from("whatsapp_numbers")
     .select("id")
     .eq("phone_number_id", phoneNumberId)
     .single()
 
-  if (!phoneNumber) throw new Error("Phone number not found in database")
+  if (phoneError || !phoneNumber?.id) throw new Error("Phone number not found in database")
 
   // Create template on Meta
   const metaResponse = await createWhatsAppTemplate(BUSINESS_ACCOUNT_ID, templateData)
 
   // Save to database
-  const { error } = await supabase.from("message_templates").insert({
+  const { error: insertError } = await supabase.from("message_templates").insert({
     template_id: metaResponse.id,
     name: templateData.name,
     category: templateData.category,
@@ -86,7 +84,7 @@ export async function createAndSubmitTemplate(
     whatsapp_number_id: phoneNumber.id,
   })
 
-  if (error) throw new Error(`Database error: ${error.message}`)
+  if (insertError) throw new Error(`Database error: ${insertError.message}`)
 
   revalidatePath("/templates")
   return { success: true, templateId: metaResponse.id, status: metaResponse.status }
@@ -96,22 +94,22 @@ export async function createAndSubmitTemplate(
 export async function getTemplatesFromDB(phoneNumberId: string) {
   const supabase = getSupabaseAdmin()
 
-  const { data: phoneNumber } = await supabase
+  const { data: phoneNumber, error: phoneError } = await supabase
     .from("whatsapp_numbers")
     .select("id")
     .eq("phone_number_id", phoneNumberId)
     .single()
 
-  if (!phoneNumber) return []
+  if (phoneError || !phoneNumber?.id) return []
 
-  const { data: templates, error } = await supabase
+  const { data: templates, error: templatesError } = await supabase
     .from("message_templates")
     .select("*")
     .eq("whatsapp_number_id", phoneNumber.id)
     .order("created_at", { ascending: false })
 
-  if (error) {
-    console.error("[app] Error fetching templates:", error)
+  if (templatesError) {
+    console.error("[app] Error fetching templates:", templatesError)
     return []
   }
 
