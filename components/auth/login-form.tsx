@@ -61,7 +61,7 @@ export function LoginForm() {
           <Input
             id="email"
             type="email"
-            autoComplete="email"
+            autoComplete="off"
             value={email}
             onChange={(event) => setEmail(event.target.value)}
             required
@@ -73,7 +73,7 @@ export function LoginForm() {
           <Input
             id="password"
             type="password"
-            autoComplete="current-password"
+            autoComplete="off"
             value={password}
             onChange={(event) => setPassword(event.target.value)}
             required
@@ -102,3 +102,4 @@ export function LoginForm() {
     </div>
   )
 }
+
