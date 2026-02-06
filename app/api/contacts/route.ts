@@ -1,11 +1,11 @@
 import { createSupabaseServerClient } from "@/lib/supabase/server"
 import { NextResponse } from "next/server"
-import { logError, logInfo, UnauthorizedError, ValidationError } from "@/lib/errors"
+import { logError, logInfo, logWarn, UnauthorizedError, ValidationError } from "@/lib/errors"
 
 export async function GET() {
   try {
     logInfo("API:GET /api/contacts", "Fetching contacts")
-    
+
     const supabase = await createSupabaseServerClient()
     const { data: { user }, error: userError } = await supabase.auth.getUser()
 
@@ -35,11 +35,11 @@ export async function GET() {
     })
   } catch (error) {
     logError("API:GET /api/contacts", error)
-    
+
     if (error instanceof UnauthorizedError) {
       return NextResponse.json({ error: error.message }, { status: error.statusCode })
     }
-    
+
     return NextResponse.json(
       { error: "Failed to fetch contacts" },
       { status: 500 }
@@ -50,7 +50,7 @@ export async function GET() {
 export async function POST(request: Request) {
   try {
     const body = await request.json()
-    
+
     // Validation
     if (!body.name || !body.phone_number) {
       throw new ValidationError("Name and phone number are required")
@@ -83,21 +83,19 @@ export async function POST(request: Request) {
     return NextResponse.json(data, { status: 201 })
   } catch (error) {
     logError("API:POST /api/contacts", error)
-    
+
     if (error instanceof ValidationError) {
       return NextResponse.json({ error: error.message }, { status: error.statusCode })
     }
-    
+
     if (error instanceof UnauthorizedError) {
       return NextResponse.json({ error: error.message }, { status: error.statusCode })
     }
-    
+
     return NextResponse.json(
       { error: "Failed to create contact" },
       { status: 500 }
     )
   }
 }
-
-import { logWarn } from "@/lib/errors"
 
