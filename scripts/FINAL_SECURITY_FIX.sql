@@ -33,24 +33,11 @@ $$;
 -- ============================================================================
 -- This is a master policy that applies to all operations on each table
 -- RESTRICTIVE means it must pass along with any PERMISSIVE policies
-
--- auth.sessions
-DROP POLICY IF EXISTS "block_anon_sessions" ON auth.sessions;
-CREATE POLICY "block_anon_sessions" ON auth.sessions
-    AS RESTRICTIVE
-    FOR ALL
-    USING (auth.uid() IS NOT NULL);
-
--- auth.users
-DROP POLICY IF EXISTS "block_anon_auth_users" ON auth.users;
-CREATE POLICY "block_anon_auth_users" ON auth.users
-    AS RESTRICTIVE
-    FOR ALL
-    USING (auth.uid() IS NOT NULL);
+-- NOTE: We only apply to public schema tables we own
 
 -- public.users
-DROP POLICY IF EXISTS "block_anon_users" ON public.users;
-CREATE POLICY "block_anon_users" ON public.users
+DROP POLICY IF EXISTS "block_anon_users" ON users;
+CREATE POLICY "block_anon_users" ON users
     AS RESTRICTIVE
     FOR ALL
     USING (auth.uid() IS NOT NULL);
@@ -181,48 +168,70 @@ CREATE POLICY "block_anon_trusted_users" ON trusted_users
     FOR ALL
     USING (auth.uid() IS NOT NULL);
 
--- realtime.messages (if exists)
-DO $$
-BEGIN
-    IF EXISTS (
-        SELECT 1 FROM information_schema.tables 
-        WHERE table_schema = 'realtime' AND table_name = 'messages'
-    ) THEN
-        EXECUTE 'DROP POLICY IF EXISTS "block_anon_realtime_messages" ON realtime.messages';
-        EXECUTE 'CREATE POLICY "block_anon_realtime_messages" ON realtime.messages
-            AS RESTRICTIVE
-            FOR ALL
-            USING (auth.uid() IS NOT NULL)';
-    END IF;
-END $$;
+
 
 -- ============================================================================
 -- STEP 3: Ensure service_role can still access everything
 -- ============================================================================
 -- RESTRICTIVE policies apply to service_role too, so we need to allow it
 
-DO $$
-DECLARE
-    table_record RECORD;
-BEGIN
-    FOR table_record IN 
-        SELECT schemaname, tablename 
-        FROM pg_tables 
-        WHERE schemaname IN ('public', 'auth')
-        AND tablename NOT LIKE 'pg_%'
-    LOOP
-        EXECUTE format('
-            DROP POLICY IF EXISTS "service_role_bypass_%s" ON %I.%I;
-            CREATE POLICY "service_role_bypass_%s" ON %I.%I
-                AS RESTRICTIVE
-                FOR ALL
-                TO service_role
-                USING (true)
-                WITH CHECK (true);
-        ', table_record.tablename, table_record.schemaname, table_record.tablename,
-           table_record.tablename, table_record.schemaname, table_record.tablename);
-    END LOOP;
-END $$;
+-- Create service_role bypass for each public table
+DROP POLICY IF EXISTS "service_role_bypass_users" ON users;
+CREATE POLICY "service_role_bypass_users" ON users AS RESTRICTIVE FOR ALL TO service_role USING (true) WITH CHECK (true);
+
+DROP POLICY IF EXISTS "service_role_bypass_projects" ON projects;
+CREATE POLICY "service_role_bypass_projects" ON projects AS RESTRICTIVE FOR ALL TO service_role USING (true) WITH CHECK (true);
+
+DROP POLICY IF EXISTS "service_role_bypass_project_members" ON project_members;
+CREATE POLICY "service_role_bypass_project_members" ON project_members AS RESTRICTIVE FOR ALL TO service_role USING (true) WITH CHECK (true);
+
+DROP POLICY IF EXISTS "service_role_bypass_whatsapp_numbers" ON whatsapp_numbers;
+CREATE POLICY "service_role_bypass_whatsapp_numbers" ON whatsapp_numbers AS RESTRICTIVE FOR ALL TO service_role USING (true) WITH CHECK (true);
+
+DROP POLICY IF EXISTS "service_role_bypass_contacts" ON contacts;
+CREATE POLICY "service_role_bypass_contacts" ON contacts AS RESTRICTIVE FOR ALL TO service_role USING (true) WITH CHECK (true);
+
+DROP POLICY IF EXISTS "service_role_bypass_messages" ON messages;
+CREATE POLICY "service_role_bypass_messages" ON messages AS RESTRICTIVE FOR ALL TO service_role USING (true) WITH CHECK (true);
+
+DROP POLICY IF EXISTS "service_role_bypass_media_files" ON media_files;
+CREATE POLICY "service_role_bypass_media_files" ON media_files AS RESTRICTIVE FOR ALL TO service_role USING (true) WITH CHECK (true);
+
+DROP POLICY IF EXISTS "service_role_bypass_message_templates" ON message_templates;
+CREATE POLICY "service_role_bypass_message_templates" ON message_templates AS RESTRICTIVE FOR ALL TO service_role USING (true) WITH CHECK (true);
+
+DROP POLICY IF EXISTS "service_role_bypass_templates" ON templates;
+CREATE POLICY "service_role_bypass_templates" ON templates AS RESTRICTIVE FOR ALL TO service_role USING (true) WITH CHECK (true);
+
+DROP POLICY IF EXISTS "service_role_bypass_workflows" ON workflows;
+CREATE POLICY "service_role_bypass_workflows" ON workflows AS RESTRICTIVE FOR ALL TO service_role USING (true) WITH CHECK (true);
+
+DROP POLICY IF EXISTS "service_role_bypass_workflow_steps" ON workflow_steps;
+CREATE POLICY "service_role_bypass_workflow_steps" ON workflow_steps AS RESTRICTIVE FOR ALL TO service_role USING (true) WITH CHECK (true);
+
+DROP POLICY IF EXISTS "service_role_bypass_integrations" ON integrations;
+CREATE POLICY "service_role_bypass_integrations" ON integrations AS RESTRICTIVE FOR ALL TO service_role USING (true) WITH CHECK (true);
+
+DROP POLICY IF EXISTS "service_role_bypass_ai_configurations" ON ai_configurations;
+CREATE POLICY "service_role_bypass_ai_configurations" ON ai_configurations AS RESTRICTIVE FOR ALL TO service_role USING (true) WITH CHECK (true);
+
+DROP POLICY IF EXISTS "service_role_bypass_webhook_endpoints" ON webhook_endpoints;
+CREATE POLICY "service_role_bypass_webhook_endpoints" ON webhook_endpoints AS RESTRICTIVE FOR ALL TO service_role USING (true) WITH CHECK (true);
+
+DROP POLICY IF EXISTS "service_role_bypass_email_logs" ON email_logs;
+CREATE POLICY "service_role_bypass_email_logs" ON email_logs AS RESTRICTIVE FOR ALL TO service_role USING (true) WITH CHECK (true);
+
+DROP POLICY IF EXISTS "service_role_bypass_email_attachments" ON email_attachments;
+CREATE POLICY "service_role_bypass_email_attachments" ON email_attachments AS RESTRICTIVE FOR ALL TO service_role USING (true) WITH CHECK (true);
+
+DROP POLICY IF EXISTS "service_role_bypass_notification_preferences" ON notification_preferences;
+CREATE POLICY "service_role_bypass_notification_preferences" ON notification_preferences AS RESTRICTIVE FOR ALL TO service_role USING (true) WITH CHECK (true);
+
+DROP POLICY IF EXISTS "service_role_bypass_communication_analytics" ON communication_analytics;
+CREATE POLICY "service_role_bypass_communication_analytics" ON communication_analytics AS RESTRICTIVE FOR ALL TO service_role USING (true) WITH CHECK (true);
+
+DROP POLICY IF EXISTS "service_role_bypass_trusted_users" ON trusted_users;
+CREATE POLICY "service_role_bypass_trusted_users" ON trusted_users AS RESTRICTIVE FOR ALL TO service_role USING (true) WITH CHECK (true);
 
 COMMIT;
 
@@ -237,9 +246,9 @@ SELECT
     roles,
     cmd
 FROM pg_policies 
-WHERE schemaname IN ('public', 'auth')
+WHERE schemaname = 'public'
 AND policyname LIKE 'block_anon_%'
-ORDER BY schemaname, tablename, policyname;
+ORDER BY tablename, policyname;
 
 -- ============================================================================
 -- SUCCESS MESSAGE
