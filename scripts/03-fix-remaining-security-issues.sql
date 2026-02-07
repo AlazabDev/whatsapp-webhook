@@ -131,16 +131,22 @@ CREATE POLICY "whatsapp_numbers_update_own_project" ON whatsapp_numbers
 
 -- Templates (WhatsApp) Table
 -- =====================================================
+-- Note: templates table doesn't have project_id, it has phone_number_id
+-- We need to join through whatsapp_numbers to check project access
 DROP POLICY IF EXISTS "templates_wa_select_authenticated" ON templates;
 
 CREATE POLICY "templates_wa_select_authenticated" ON templates
     FOR SELECT
     TO authenticated
     USING (
-        project_id IN (
-            SELECT project_id 
-            FROM project_members 
-            WHERE user_id = auth.uid()
+        phone_number_id IN (
+            SELECT id 
+            FROM whatsapp_numbers 
+            WHERE project_id IN (
+                SELECT project_id 
+                FROM project_members 
+                WHERE user_id = auth.uid()
+            )
         )
     );
 
