@@ -5,10 +5,10 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Smartphone, Zap, Calendar, ChevronLeft, Code2, Webhook, ExternalLink } from "lucide-react"
 import { DailyMessagesChart } from "@/components/dashboard/charts"
-import { useState } from "react"
+import { useDashboardStats } from "@/hooks/use-data"
 
 export default function Dashboard() {
-  const [stats, setStats] = useState({ messages: 0, contacts: 0 })
+  const { stats, isLoading, error } = useDashboardStats()
 
   return (
     <div className="flex h-screen bg-background text-right" dir="rtl">
@@ -48,7 +48,7 @@ export default function Dashboard() {
                 <span className="text-sm font-medium text-muted-foreground">جهات الاتصال</span>
                 <ChevronLeft className="h-4 w-4 text-muted-foreground" />
               </div>
-              <div className="text-3xl font-bold">{stats.contacts}</div>
+              <div className="text-3xl font-bold">{isLoading ? "..." : stats.contacts}</div>
               <p className="text-xs text-muted-foreground mt-1">إجمالي العملاء</p>
             </CardContent>
           </Card>
@@ -58,18 +58,18 @@ export default function Dashboard() {
                 <span className="text-sm font-medium text-muted-foreground">الرسائل</span>
                 <ChevronLeft className="h-4 w-4 text-muted-foreground" />
               </div>
-              <div className="text-3xl font-bold">{stats.messages}</div>
+              <div className="text-3xl font-bold">{isLoading ? "..." : stats.messages}</div>
               <p className="text-xs text-muted-foreground mt-1">نشاط المنصة الحالي</p>
             </CardContent>
           </Card>
           <Card>
             <CardContent className="p-6">
               <div className="flex items-center justify-between mb-4">
-                <span className="text-sm font-medium text-muted-foreground">السجلات</span>
+                <span className="text-sm font-medium text-muted-foreground">الأرقام</span>
                 <ChevronLeft className="h-4 w-4 text-muted-foreground" />
               </div>
-              <div className="text-3xl font-bold">0 أخطاء</div>
-              <p className="text-xs text-muted-foreground mt-1">من 69 إجمالا</p>
+              <div className="text-3xl font-bold">{isLoading ? "..." : stats.numbers}</div>
+              <p className="text-xs text-muted-foreground mt-1">الأرقام المفعلة</p>
             </CardContent>
           </Card>
           <Card>
@@ -143,7 +143,7 @@ export default function Dashboard() {
                   </Button>
                 </div>
                 <div className="bg-muted p-3 rounded-md font-mono text-[10px] break-all">
-                  {`{ \"mcpServers\": { \"alazab\": { \"url\": \"https://whatsapp.alazab.com/mcp\" } } }`}
+                  {`{ "mcpServers": { "alazab": { "url": "https://whatsapp.alazab.com/mcp" } } }`}
                 </div>
               </CardContent>
             </Card>

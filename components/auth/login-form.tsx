@@ -27,14 +27,14 @@ export function LoginForm() {
       const { error } = await supabase.auth.signInWithPassword({ email, password })
 
       if (error) {
-        setErrorMessage(error.message || "حدث خطأ في تسجيل الدخول")
+        setErrorMessage(error.message)
         setIsSubmitting(false)
         return
       }
 
       router.replace(nextPath)
     } catch (err) {
-      setErrorMessage("خطأ في الاتصال بالخادم. تأكد من تكوين Supabase.")
+      setErrorMessage("حدث خطأ أثناء تسجيل الدخول")
       setIsSubmitting(false)
     }
   }
@@ -50,10 +50,10 @@ export function LoginForm() {
       })
 
       if (error) {
-        setErrorMessage(error.message || "فشل تسجيل الدخول عبر Google")
+        setErrorMessage(error.message)
       }
     } catch (err) {
-      setErrorMessage("خطأ في الاتصال بالخادم. تأكد من تكوين Supabase.")
+      setErrorMessage("حدث خطأ في عملية تسجيل الدخول")
     }
   }
 
@@ -70,10 +70,11 @@ export function LoginForm() {
           <Input
             id="email"
             type="email"
-            autoComplete="email"
+            placeholder="your@email.com"
             value={email}
             onChange={(event) => setEmail(event.target.value)}
             required
+            disabled={isSubmitting}
           />
         </div>
 
@@ -82,14 +83,19 @@ export function LoginForm() {
           <Input
             id="password"
             type="password"
-            autoComplete="current-password"
+            placeholder="••••••••"
             value={password}
             onChange={(event) => setPassword(event.target.value)}
             required
+            disabled={isSubmitting}
           />
         </div>
 
-        {errorMessage ? <p className="text-sm text-destructive">{errorMessage}</p> : null}
+        {errorMessage ? (
+          <div className="p-3 bg-destructive/10 border border-destructive rounded-md">
+            <p className="text-sm text-destructive">{errorMessage}</p>
+          </div>
+        ) : null}
 
         <Button className="w-full" type="submit" disabled={isSubmitting}>
           {isSubmitting ? "جارٍ تسجيل الدخول..." : "تسجيل الدخول"}
@@ -105,9 +111,17 @@ export function LoginForm() {
         </div>
       </div>
 
-      <Button variant="outline" className="w-full" type="button" onClick={handleGoogleLogin} disabled={isSubmitting}>
+      <Button 
+        variant="outline" 
+        className="w-full" 
+        type="button" 
+        onClick={handleGoogleLogin}
+        disabled={isSubmitting}
+      >
         تسجيل الدخول عبر Google
       </Button>
     </div>
   )
 }
+
+
