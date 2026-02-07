@@ -2,45 +2,7 @@ import type React from "react"
 import type { Metadata } from "next"
 import { Geist, Geist_Mono } from "next/font/google"
 import { Analytics } from "@vercel/analytics/next"
-import "./globals.css"
-
-const _geist = Geist({ 
-  subsets: ["latin"],
-  variable: "--font-geist"
-})
-const _geistMono = Geist_Mono({ subsets: ["latin"] })
-
-export const metadata: Metadata = {
-  title: "العزب هاب - منصة واتساب للأعمال",
-  description: "منصة إدارة واتساب المتكاملة من العزب للأعمال",
-  generator: "whatsapp-platform",
-  icons: {
-    icon: [
-      {
-        url: "/icon-light-32x32.png",
-        media: "(prefers-color-scheme: light)",
-      },
-      {
-        url: "/icon-dark-32x32.png",
-        media: "(prefers-color-scheme: dark)",
-      },
-      {
-        url: "/icon.svg",
-        type: "image/svg+xml",
-      },
-    ],
-    apple: "/apple-icon.png",
-  },
-  metadataBase: new URL("https://whatsapp.alazab.com"),
-}
-
-export default function RootLayout({
-  children,
-}: Readonly<{
-  children: React.ReactNode
-}>) {
-  try {
-    validateStartupEnv()
+// Environment validation happens at runtime when needed
   } catch (error) {
     // Silently handle env validation errors during initialization
     console.warn("[Layout] Environment setup:", error instanceof Error ? error.message : String(error))
