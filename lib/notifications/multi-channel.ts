@@ -62,13 +62,14 @@ export class MultiChannelNotificationService {
           await this.logCommunication(channel, templateName, recipient, 'sent');
         }
       } catch (error) {
+        const errMsg = error instanceof Error ? error.message : 'Unknown error';
         results.push({
           channel,
           success: false,
-          error: error.message,
+          error: errMsg,
         });
         
-        await this.logCommunication(channel, templateName, recipient, 'failed', error.message);
+        await this.logCommunication(channel, templateName, recipient, 'failed', errMsg);
       }
     }
     

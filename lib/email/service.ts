@@ -80,7 +80,7 @@ export class EmailService {
         subject,
         variables,
         status: 'failed',
-        error: error.message,
+        error: error instanceof Error ? error.message : 'Unknown error',
       });
       
       throw error;
