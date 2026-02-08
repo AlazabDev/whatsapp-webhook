@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@/lib/supabase/server';
+import { createSupabaseAdminClient } from '@/lib/supabase/server';
 import { EmailService } from '@/lib/email/service';
 
 export async function POST(request: NextRequest) {
@@ -7,7 +7,7 @@ export async function POST(request: NextRequest) {
     const { projectId, template, recipient, variables, options } = await request.json();
     
     // التحقق من الصلاحيات
-    const supabase = createClient();
+    const supabase = createSupabaseAdminClient();
     const { data: { user } } = await supabase.auth.getUser();
     
     if (!user) {
