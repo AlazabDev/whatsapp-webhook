@@ -20,7 +20,7 @@ Thumbs.db
 *.swo
 
 # تبعيات Node
-node_modules/
+node_modules
 .next/
 next-env.d.ts
 npm-debug.log*
