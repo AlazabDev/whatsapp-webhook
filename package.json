@@ -2,9 +2,6 @@
   "name": "alazab-whatsapp-hub",
   "version": "0.1.0",
   "private": true,
-
-  "packageManager": "pnpm@9.15.4",
-
   "scripts": {
     "build": "next build",
     "dev": "next dev",
